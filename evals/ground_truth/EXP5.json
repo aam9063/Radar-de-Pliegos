@@ -36,6 +36,6 @@
     ],
     "garantia_provisional": { "valor": "No se prevé", "nota": "cláusula undécima: 'Garantía Provisional: No se prevé'" },
     "garantia_definitiva": "5% del precio final ofertado por el adjudicatario, IVA excluido",
-    "subcontratacion_limites": { "valor": "Sin límite porcentual específico; los licitadores deben indicar en la oferta la parte del contrato que tengan previsto subcontratar, señalando su importe y los subcontratistas", "nota": "cláusula trigésima" }
+    "subcontratacion_limites": { "valor": "sin límite específico", "nota": "cláusula trigésima: sin límite porcentual; exige declarar en la oferta la parte prevista de subcontratación con su importe y subcontratistas (hecho no representado en el vocabulario canónico de MP-02)" }
   }
 }
