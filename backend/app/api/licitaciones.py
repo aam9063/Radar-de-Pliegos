@@ -1,4 +1,4 @@
-"""Endpoints for licitaciones and PDF upload (BRIEF §9, AC-02)."""
+"""Endpoints for licitaciones, PDF upload and structured extraction."""
 
 from typing import Annotated
 
@@ -7,17 +7,22 @@ from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.schemas import DocumentoOut, LicitacionCreate, LicitacionOut
+from app.api.deps import get_llm_client
+from app.api.schemas import DocumentoOut, FichaOut, LicitacionCreate, LicitacionOut
 from app.core.config import Settings, get_settings
-from app.db.models import Documento, EstadoLicitacion, Licitacion, Pagina, TipoDocumento
+from app.db.models import Documento, EstadoLicitacion, Ficha, Licitacion, Pagina, TipoDocumento
 from app.db.session import get_session
+from app.domain.llm import LLMClient, LLMError
+from app.domain.pliego_ficha import ExtractionInvalidOutputError
 from app.services.document_storage import save_pdf
+from app.services.ficha_extraction import extract_ficha_for_licitacion
 from app.services.page_extraction import extract_pages
 
 router = APIRouter(tags=["licitaciones"])
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 SettingsDep = Annotated[Settings, Depends(get_settings)]
+LLMDep = Annotated[LLMClient, Depends(get_llm_client)]
 
 
 @router.post(
@@ -94,3 +99,53 @@ async def subir_documento(
     await session.commit()
     await session.refresh(documento)
     return documento
+
+
+async def _get_licitacion_or_404(session: AsyncSession, licitacion_id: int) -> Licitacion:
+    licitacion = await session.get(Licitacion, licitacion_id)
+    if licitacion is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"La licitación {licitacion_id} no existe",
+        )
+    return licitacion
+
+
+@router.post("/licitaciones/{licitacion_id}/extraer", response_model=FichaOut)
+async def extraer_ficha(
+    licitacion_id: int,
+    session: SessionDep,
+    settings: SettingsDep,
+    llm_client: LLMDep,
+) -> Ficha:
+    """Extract the structured dossier of a licitación (BRIEF §9, S3).
+
+    Nothing is persisted when the LLM answer is invalid even after the single
+    retry: both that and provider faults map to a clear HTTP 502.
+    """
+    licitacion = await _get_licitacion_or_404(session, licitacion_id)
+    try:
+        return await extract_ficha_for_licitacion(session, licitacion, llm_client, settings)
+    except ExtractionInvalidOutputError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(exc),
+        ) from exc
+    except LLMError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="El proveedor de IA no completó la extracción del pliego.",
+        ) from exc
+
+
+@router.get("/licitaciones/{licitacion_id}/ficha", response_model=FichaOut)
+async def obtener_ficha(licitacion_id: int, session: SessionDep) -> Ficha:
+    """Return the persisted dossier of a licitación, or 404 if not extracted yet."""
+    await _get_licitacion_or_404(session, licitacion_id)
+    ficha = await session.scalar(select(Ficha).where(Ficha.licitacion_id == licitacion_id))
+    if ficha is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"La licitación {licitacion_id} aún no tiene ficha extraída",
+        )
+    return ficha

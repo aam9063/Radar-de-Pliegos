@@ -1,13 +1,24 @@
-"""SQLAlchemy 2 async models for the MVP schema (RP-02).
+"""SQLAlchemy 2 async models for the MVP schema.
 
-Only `licitacion`, `documento` and `pagina` live here for now; ficha,
-perfil_empresa and decision arrive with RP-04/RP-06.
+`licitacion`, `documento` and `pagina` (RP-02); `ficha` (RP-04). perfil_empresa
+and decision arrive with RP-06.
 """
 
 import enum
 from datetime import datetime
+from typing import Any
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String, Text, func
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    func,
+)
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -89,3 +100,24 @@ class Pagina(Base):
     sin_texto: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     documento: Mapped[Documento] = relationship(back_populates="paginas")
+
+
+class Ficha(Base):
+    """Structured dossier of a licitación, extracted by the LLM (RP-04).
+
+    ``datos`` holds the serialized, validated ``PliegoFicha``; one row per
+    licitación (re-extraction replaces it).
+    """
+
+    __tablename__ = "ficha"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    licitacion_id: Mapped[int] = mapped_column(
+        ForeignKey("licitacion.id", ondelete="CASCADE"), unique=True, nullable=False
+    )
+    datos: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    modelo: Mapped[str] = mapped_column(String(255), nullable=False)
+    creada_en: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    avisos: Mapped[list[str]] = mapped_column(JSONB, nullable=False, default=list)
