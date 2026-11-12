@@ -34,7 +34,7 @@ Fuente de verdad: `BRIEF.md`. Se cita literalmente. Cada `S#` enlaza los criteri
 ## Tasks
 
 - [x] **RP-01** Esqueleto del monorepo, Docker Compose, `/health`, CI mínimo — cubre AC-01, AC-11 — route: inline — commit: `75b1a80` `483762b` `5e3bbdc`
-- [ ] **RP-02** Modelos, migraciones y subida de PDFs con extracción por página — cubre AC-02 — route: — commit: —
+- [x] **RP-02** Modelos, migraciones y subida de PDFs con extracción por página — cubre AC-02 — route: worker (`gentle-ai-worker`) — commit: `bca0430` `9bb18eb`
 - [ ] **RP-03** Puerto `LLMClient`, adaptador NaN y cliente falso con límites — cubre AC-10 — route: — commit: —
 - [ ] **RP-04** Esquema `PliegoFicha` y extracción con reintento — cubre AC-03, AC-04 — route: — commit: —
 - [ ] **RP-05** Verificación de evidencias y fusión con prioridad de fuentes — cubre AC-05, AC-07 — route: — commit: —
@@ -54,6 +54,7 @@ Fuente de verdad: `BRIEF.md`. Se cita literalmente. Cada `S#` enlaza los criteri
 | Tarea | RED | GREEN | Lint/tipos/tests | Commit | RDD assess |
 | --- | --- | --- | --- | --- | --- |
 | RP-01 | `ModuleNotFoundError: No module named 'app.main'` (test_health) | `1 passed` | backend `ruff check`/`format`/`mypy --strict` OK · `pytest` 1 passed · frontend `eslint`/`tsc --noEmit`/`vitest`/`build`/`prettier` OK · `docker compose config` OK · `docker compose build` OK | `75b1a80` `483762b` `5e3bbdc` | infra (`5e3bbdc`) high → native review **approved** |
+| RP-02 | `ModuleNotFoundError: No module named 'app.db.session'` (collection) | `10 passed` | backend `ruff check`/`format`/`mypy --strict` OK · `pytest` 10 passed (6 integración + 3 extracción + 1 health) · `alembic check` OK | `bca0430` `9bb18eb` | medium → slice close |
 
 ## Progress / Next step
 
@@ -61,7 +62,8 @@ Fuente de verdad: `BRIEF.md`. Se cita literalmente. Cada `S#` enlaza los criteri
 - [x] Bootstrap git: `main` (17d09a5), `dev`, `feat/radar-pliegos-mvp`.
 - [x] RP-01 cerrado: código + verificaciones + 3 commits (`75b1a80`, `483762b`, `5e3bbdc`) + RDD nativo aprobado.
 - [x] AC-01 verificado end-to-end (`docker compose up -d` → db/api/web healthy, `/health` 200). Fix mount pg18 `72779c3` + template de entorno commiteado `0ecd0b0`. Assess del fix: medium → slice close.
-- [ ] RP-02 en curso.
+- [x] RP-02 cerrado: modelos + migración + subida + extracción por página (worker `gentle-ai-worker`), 10 tests, assess medium.
+- [ ] RP-03 en curso.
 
 ### Hallazgos RDD (no bloqueantes, follow-up)
 
