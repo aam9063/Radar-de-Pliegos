@@ -107,6 +107,112 @@ class TestExtraerFichaDePdfs:
             )
 
 
+class TestFallbackSubcontratacion:
+    """S2 (MP-01): fallback determinista cuando el LLM deja la subcontratación nula.
+
+    El fallback escanea el texto real de las páginas (después de fusión y
+    verificación) y rellena el campo con evidencia literal de la página, sin
+    llamar al LLM.
+    """
+
+    async def test_llena_limite_porcentual_cuando_el_llm_lo_deja_nulo(self, tmp_path) -> None:
+        texto = (
+            "Cláusula 15. Subcontratación. El contratista podrá subcontratar hasta un "
+            "50 % del contrato del precio de adjudicación. Límite (%): 50."
+        )
+        _escribir_pliego(tmp_path / "pliegos", "sub.pdf", texto)
+        documentos = [DocumentoPliego(tipo="PCAP", archivo="sub.pdf")]
+
+        ficha = await extraer_ficha_de_pdfs(
+            documentos, tmp_path / "pliegos", FakeLLMClient([{}]), model="modelo-test"
+        )
+
+        campo = ficha.subcontratacion_limites
+        assert campo.valor is not None
+        assert "50" in campo.valor
+        assert len(campo.evidencia) == 1
+        ev = campo.evidencia[0]
+        assert ev.documento == "PCAP"
+        assert ev.pagina == 1
+        assert len(ev.cita.split()) <= 30
+        # La cita literal pertenece a la página: la evidencia verifica de verdad.
+        assert campo.verificado
+
+    async def test_llena_sin_limite_cuando_la_clausula_no_fija_porcentaje(self, tmp_path) -> None:
+        texto = (
+            "Cláusula 30. Subcontratación: se autoriza sin límite porcentual "
+            "específico, conforme al artículo 215 de la LCSP."
+        )
+        _escribir_pliego(tmp_path / "pliegos", "sub.pdf", texto)
+        documentos = [DocumentoPliego(tipo="PCAP", archivo="sub.pdf")]
+
+        ficha = await extraer_ficha_de_pdfs(
+            documentos, tmp_path / "pliegos", FakeLLMClient([{}]), model="modelo-test"
+        )
+
+        assert ficha.subcontratacion_limites.valor == (
+            "Sin límite porcentual específico conforme al artículo 215 de la LCSP"
+        )
+        assert ficha.subcontratacion_limites.verificado
+
+    async def test_llena_clausula_articulo_215_sin_porcentaje(self, tmp_path) -> None:
+        # EXP1/EXP3 (Barbadás/Candelaria): la cláusula solo remite al art. 215 de la LCSP.
+        texto = (
+            "Cláusula 24. Subcontratación. Se autoriza la subcontratación parcial\n"
+            "de las prestaciones accesorias conforme al artículo 215 de la LCSP."
+        )
+        _escribir_pliego(tmp_path / "pliegos", "sub.pdf", texto)
+        documentos = [DocumentoPliego(tipo="PCAP", archivo="sub.pdf")]
+
+        ficha = await extraer_ficha_de_pdfs(
+            documentos, tmp_path / "pliegos", FakeLLMClient([{}]), model="modelo-test"
+        )
+
+        assert ficha.subcontratacion_limites.valor == (
+            "Se permite subcontratar conforme al artículo 215 de la LCSP"
+        )
+        assert ficha.subcontratacion_limites.verificado
+
+    async def test_entrada_sin_clausula_de_subcontratacion_deja_el_campo_nulo(
+        self, tmp_path
+    ) -> None:
+        _escribir_pliego(
+            tmp_path / "pliegos", "sub.pdf", "Cláusula única. Objeto: obras de pavimentación."
+        )
+        documentos = [DocumentoPliego(tipo="PCAP", archivo="sub.pdf")]
+
+        ficha = await extraer_ficha_de_pdfs(
+            documentos, tmp_path / "pliegos", FakeLLMClient([{}]), model="modelo-test"
+        )
+
+        assert ficha.subcontratacion_limites.valor is None
+        assert ficha.subcontratacion_limites.evidencia == []
+
+    async def test_no_sobrescribe_cuando_el_llm_si_extrajo_el_campo(self, tmp_path) -> None:
+        texto = (
+            "Cláusula 15. Subcontratación. El contratista podrá subcontratar hasta un "
+            "50 % del contrato del precio de adjudicación."
+        )
+        _escribir_pliego(tmp_path / "pliegos", "sub.pdf", texto)
+        documentos = [DocumentoPliego(tipo="PCAP", archivo="sub.pdf")]
+        respuesta = {
+            "subcontratacion_limites": {
+                "valor": "Se permite subcontratar",
+                "evidencia": [
+                    {"documento": "PCAP", "pagina": 1, "cita": "Subcontratación. El contratista"}
+                ],
+                "confianza": "alta",
+            }
+        }
+
+        ficha = await extraer_ficha_de_pdfs(
+            documentos, tmp_path / "pliegos", FakeLLMClient([respuesta]), model="modelo-test"
+        )
+
+        assert ficha.subcontratacion_limites.valor == "Se permite subcontratar"
+        assert ficha.subcontratacion_limites.verificado
+
+
 class TestResolverDirDatos:
     def test_argumento_tiene_prioridad_sobre_entorno(self) -> None:
         assert resolver_dir_datos("CLI-ARG", "/env/dir") == Path("CLI-ARG")

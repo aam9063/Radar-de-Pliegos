@@ -2,6 +2,7 @@
 
 from app.domain.pliego_ficha import (
     ClasificacionRequerida,
+    CriterioAdjudicacion,
     PlazoEjecucion,
     PliegoFicha,
 )
@@ -90,6 +91,137 @@ class TestComparacionPorCampo:
         comparaciones = comparar_ficha({}, _ficha())
         assert {r.campo for r in comparaciones} == set(PliegoFicha.model_fields)
         assert len(comparaciones) == len(PliegoFicha.model_fields)
+
+
+class TestNormalizacionDeterminista:
+    """S1 (MP-01): capa de normalización determinista aplicada a ambos lados.
+
+    Cada test cita el ejemplo del análisis ``evals/results/2026-11-12-analisis.md``
+    que la regla corrige. Solo relaja FORMATO, nunca significado.
+    """
+
+    def test_ponderacion_prefijo_hasta_se_ignora(self) -> None:
+        # Análisis 4.1 (EXP5/Ronda): extrajo "Hasta 90 puntos", esperábamos "90 puntos".
+        esperados = {
+            "criterios_adjudicacion": [
+                {
+                    "nombre": "Mejor precio ofertado",
+                    "tipo": "automatico",
+                    "ponderacion": "90 puntos",
+                }
+            ]
+        }
+        ficha = _ficha(
+            criterios_adjudicacion=[
+                CriterioAdjudicacion(
+                    nombre="Mejor precio ofertado", tipo="automatico", ponderacion="Hasta 90 puntos"
+                )
+            ]
+        )
+        assert _resultado("criterios_adjudicacion", esperados, ficha).correcto
+
+    def test_ponderacion_prefijo_gallego_ata_se_ignora(self) -> None:
+        esperados = {
+            "criterios_adjudicacion": [
+                {
+                    "nombre": "Prezo ofertado",
+                    "tipo": "automatico",
+                    "ponderacion": "50 puntos",
+                }
+            ]
+        }
+        ficha = _ficha(
+            criterios_adjudicacion=[
+                CriterioAdjudicacion(
+                    nombre="Prezo ofertado", tipo="automatico", ponderacion="Ata 50 puntos"
+                )
+            ]
+        )
+        assert _resultado("criterios_adjudicacion", esperados, ficha).correcto
+
+    def test_ponderacion_con_valor_distinto_sigue_incorrecta(self) -> None:
+        # La regla quita el prefijo "Hasta", nunca iguala valores distintos.
+        esperados = {
+            "criterios_adjudicacion": [
+                {
+                    "nombre": "Mejor precio ofertado",
+                    "tipo": "automatico",
+                    "ponderacion": "90 puntos",
+                }
+            ]
+        }
+        ficha = _ficha(
+            criterios_adjudicacion=[
+                CriterioAdjudicacion(
+                    nombre="Mejor precio ofertado", tipo="automatico", ponderacion="30 puntos"
+                )
+            ]
+        )
+        assert not _resultado("criterios_adjudicacion", esperados, ficha).correcto
+
+    def test_garantia_sinonimos_se_canonizan(self) -> None:
+        esperados = {"garantia_provisional": "No se exige"}
+        for extraida in (
+            "No se exige",
+            "No se prevé",
+            "No exigida",
+            "No se requiere",
+            "No se exige la constitución de garantía provisional",
+        ):
+            ficha = _ficha(garantia_provisional=extraida)
+            assert _resultado("garantia_provisional", esperados, ficha).correcto, extraida
+
+    def test_garantia_con_importe_no_se_canoniza(self) -> None:
+        # Una garantía con importe no puede igualar "No se exige".
+        esperados = {"garantia_provisional": "No se exige"}
+        ficha = _ficha(garantia_provisional="5% del precio final ofertado")
+        assert not _resultado("garantia_provisional", esperados, ficha).correcto
+
+    def test_cpv_sin_sufijo_descriptivo(self) -> None:
+        # Análisis 4.1 (Barbadás): extrajo "45233222-1: Trabajos de pavimentación y
+        # asfaltado", esperábamos solo el código.
+        esperados = {"cpv": "45233222-1"}
+        ficha = _ficha(cpv="45233222-1: Trabajos de pavimentación y asfaltado")
+        assert _resultado("cpv", esperados, ficha).correcto
+
+    def test_cpv_acepta_punto_y_como_separador(self) -> None:
+        esperados = {"cpv": "45000000-7, 45223300-9"}
+        ficha = _ficha(cpv="45000000-7; 45223300-9")
+        assert _resultado("cpv", esperados, ficha).correcto
+
+    def test_cpv_con_descripcion_con_comas_no_inventa_codigos(self) -> None:
+        esperados = {"cpv": "45233222-1"}
+        ficha = _ficha(cpv="45233222-1: Trabajos de pavimentación, señalización y obra diversa")
+        assert _resultado("cpv", esperados, ficha).correcto
+
+    def test_subgrupo_variantes_guion_barra_y_g(self) -> None:
+        esperados = {"clasificacion_exigida": [{"grupo": "G", "subgrupo": "4", "categoria": "4"}]}
+        for subgrupo in ("G-4", "G/4", "4"):
+            ficha = _ficha(
+                clasificacion_exigida=[
+                    ClasificacionRequerida(grupo="G", subgrupo=subgrupo, categoria="4")
+                ]
+            )
+            assert _resultado("clasificacion_exigida", esperados, ficha).correcto, subgrupo
+
+    def test_unidad_del_plazo_es_insensible_a_mayusculas(self) -> None:
+        esperados = {"plazo_ejecucion": {"valor": "3", "unidad": "meses"}}
+        ficha = _ficha(plazo_ejecucion=PlazoEjecucion(valor="3", unidad="MESES"))
+        assert _resultado("plazo_ejecucion", esperados, ficha).correcto
+
+    def test_procedimiento_y_tramitacion_sin_prefijo(self) -> None:
+        esperados = {"procedimiento": "Abierto simplificado", "tramitacion": "Ordinaria"}
+        ficha = _ficha(
+            procedimiento="Procedimiento abierto simplificado",
+            tramitacion="Tramitación ordinaria",
+        )
+        assert _resultado("procedimiento", esperados, ficha).correcto
+        assert _resultado("tramitacion", esperados, ficha).correcto
+
+    def test_texto_libre_normaliza_mayusculas_acentos_y_espacios(self) -> None:
+        esperados = {"objeto": "Modificación de aparcamientos"}
+        ficha = _ficha(objeto="MODIFICACIÓN   de    aparcamientos")
+        assert _resultado("objeto", esperados, ficha).correcto
 
 
 class TestMetricas:
