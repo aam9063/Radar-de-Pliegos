@@ -18,6 +18,10 @@ playwright-report/
 test-results/
 coverage/
 
+# Eval data (not versioned)
+evals/pliegos/
+evals/results/
+
 # OS
 .DS_Store
 Thumbs.db
