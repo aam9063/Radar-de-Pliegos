@@ -14,7 +14,7 @@
 
 - [x] **MP-01** Normalización determinista en la comparación + fallback de subcontratación + re-evaluación — cubre S1, S2, S3 — route: worker — commit: `7148145`
 - [x] **MP-02** Canonicalizar ground truth de subcontratación y penalidades + normalización de hecho central — cubre S4 — route: worker — commit: `0b48732`
-- [x] **MP-03** Mejorar prompt de extracción (solvencia vs clasificación; regla verbatim descartada) + re-evaluación — cubre S5 — route: worker + inline — commit: `(pendiente)`
+- [x] **MP-03** Mejorar prompt de extracción (solvencia vs clasificación; regla verbatim descartada) + re-evaluación — cubre S5 — route: worker + inline — commit: `4d0c729`
 
 ## Log
 
