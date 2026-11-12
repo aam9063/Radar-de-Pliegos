@@ -42,7 +42,7 @@ Fuente de verdad: `BRIEF.md`. Se cita literalmente. Cada `S#` enlaza los criteri
 - [x] **RP-07** Frontend: lista, subida, ficha + visor, decisión, perfil — cubre AC-09 — route: worker (`gentle-ai-worker`) — commit: `96b09d6` `f00e2ea`
 - [x] **RP-08** Evaluación con 5 pliegos e informe — cubre AC-08 — route: worker (`gentle-ai-worker`) — commit: `65447e8`
 - [x] **RP-09** README y cierre de la Fase 1 — cubre AC-12 — route: inline — commit: `180959b`
-- [ ] **RP-10** (Fase 2) Planificador CPM + Gantt — cubre AC-13 — route: — commit: —
+- [x] **RP-10** (Fase 2) Planificador CPM + Gantt — cubre AC-13 — route: worker (`gentle-ai-worker`) — commit: `4d0e045` `073b27f`
 
 ## TDD / RDD configuration
 
@@ -62,6 +62,7 @@ Fuente de verdad: `BRIEF.md`. Se cita literalmente. Cada `S#` enlaza los criteri
 | RP-07 | backend `assert 404 == 200` (PDF endpoint) / frontend `Failed to resolve import ../../lib/api` | backend `109 passed` · frontend `vitest 5` + `playwright 3` | backend `ruff`/`mypy` OK · frontend `eslint`/`tsc`/`vitest`/`build` OK · e2e OK | `96b09d6` `f00e2ea` | medium → slice close |
 | RP-08 | `ModuleNotFoundError: No module named 'evals.comparacion'` (collection) | `153 passed` | backend `ruff`/`format`/`mypy --strict` OK · `pytest` 153 passed (44 nuevas + 109 previas) · `python -m evals.run` exit 1 (sin NAN_API_KEY, esperado) | `65447e8` | medium → slice close |
 | RP-09 | n/a (docs) | n/a | README creado; arranque verificado en RP-01 (`docker compose up -d` → `/health` 200) | `180959b` | slice-close 4R (abajo) |
+| RP-10 | `ModuleNotFoundError: No module named 'app.domain.planificacion'` (collection) | `186 passed` | backend `ruff`/`format`/`mypy --strict` OK · `pytest` 186 passed (33 nuevas) · frontend `eslint`/`tsc`/`vitest 10`/`build` OK | `4d0e045` `073b27f` | medium → slice close |
 
 ## Progress / Next step
 
@@ -77,7 +78,7 @@ Fuente de verdad: `BRIEF.md`. Se cita literalmente. Cada `S#` enlaza los criteri
 - [x] RP-07 cerrado: frontend completo según los 3 mockups (lista/nueva/detalle/perfil) + `GET /documentos/{id}/pdf` + `GET /licitaciones/{id}/documentos` + CORS, 109 backend + 5 vitest + 3 e2e, assess medium.
 - [x] RP-08 cerrado: runner `python -m evals.run` + comparación determinista + informe markdown + esquema ground truth, 153 tests, assess medium. Falta la parte manual: 5 pliegos reales + anotaciones de Albert.
 - [x] RP-09 cerrado: README + revisión 4R del slice + borrador de PR. **Fase 1 cerrada** (AC-01..AC-12; AC-08 real pendiente de los 5 pliegos de Albert).
-- [ ] RP-10 pendiente (Fase 2, opcional).
+- [x] RP-10 cerrado: planificador CPM determinista (`networkx`) + propuesta de actividades desde el PPT + Gantt/CSV. **Fase 2 cerrada** (AC-13).
 
 ### Hallazgos RDD (no bloqueantes, follow-up)
 
@@ -125,3 +126,4 @@ RDD: commit de infra revisado nativo (**approved**); resto de work-units con ass
 - **L13** (2026-11-12): RP-08 — runner `backend/evals/` (comparación determinista con tolerancia 0,1% en económicos, listas order-insensitive, both-None correcto, alucinación = fallo; informe `evals/results/<fecha>.md` en español). Data dir: `--data-dir` > `EVALS_DIR` > `../evals`. AC-08 manual pendiente: 5 pliegos reales + ground_truth de Albert.
 - **L14** (2026-11-12): RP-09 — README (`180959b`) + slice review 4R + borrador de PR. Fase 1 cerrada.
 - **L15** (2026-11-12): dependencia `networkx` promovida a directa — requerida para el CPM del planificador (BRIEF §9, AC-13).
+- **L16** (2026-11-12): RP-10 — `calcular_cpm` puro en `domain/planificacion.py` (pase adelante/atrás, holgura, ruta crítica determinista), propuesta de actividades desde el PPT con reintento único, endpoints `GET /licitaciones/{id}/planificacion[.csv]`, Gantt con ruta crítica + export CSV. AC-13 (caso resuelto a mano) verde. Follow-up: `# type: ignore[import-untyped]` en networkx (sin py.typed) → añadir `types-networkx` si se quiere limpiar.
