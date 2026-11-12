@@ -37,7 +37,7 @@ Fuente de verdad: `BRIEF.md`. Se cita literalmente. Cada `S#` enlaza los criteri
 - [x] **RP-02** Modelos, migraciones y subida de PDFs con extracción por página — cubre AC-02 — route: worker (`gentle-ai-worker`) — commit: `bca0430` `9bb18eb`
 - [x] **RP-03** Puerto `LLMClient`, adaptador NaN y cliente falso con límites — cubre AC-10 — route: worker (`gentle-ai-worker`) — commit: `de0f588` `5e6c31a`
 - [x] **RP-04** Esquema `PliegoFicha` y extracción con reintento — cubre AC-03, AC-04 — route: worker (`gentle-ai-worker`) — commit: `6f0cec4`
-- [ ] **RP-05** Verificación de evidencias y fusión con prioridad de fuentes — cubre AC-05, AC-07 — route: — commit: —
+- [x] **RP-05** Verificación de evidencias y fusión con prioridad de fuentes — cubre AC-05, AC-07 — route: worker (`gentle-ai-worker`) — commit: `e81ade1`
 - [ ] **RP-06** Perfil de empresa y motor de decisión — cubre AC-06 — route: — commit: —
 - [ ] **RP-07** Frontend: lista, subida, ficha + visor, decisión, perfil — cubre AC-09 — route: — commit: —
 - [ ] **RP-08** Evaluación con 5 pliegos e informe — cubre AC-08 — route: — commit: —
@@ -57,6 +57,7 @@ Fuente de verdad: `BRIEF.md`. Se cita literalmente. Cada `S#` enlaza los criteri
 | RP-02 | `ModuleNotFoundError: No module named 'app.db.session'` (collection) | `10 passed` | backend `ruff check`/`format`/`mypy --strict` OK · `pytest` 10 passed (6 integración + 3 extracción + 1 health) · `alembic check` OK | `bca0430` `9bb18eb` | medium → slice close |
 | RP-03 | `ModuleNotFoundError: No module named 'app.adapters.fake_llm_client'` (collection) | `28 passed` | backend `ruff check`/`format`/`mypy --strict` OK · `pytest` 28 passed (18 nuevas + 10 previas) | `de0f588` `5e6c31a` | medium → slice close |
 | RP-04 | `ModuleNotFoundError: No module named 'app.domain.pliego_ficha'` (collection) | `51 passed` | backend `ruff check`/`format`/`mypy --strict` OK · `pytest` 51 passed (23 nuevas + 28 previas) · `alembic check` OK | `6f0cec4` | medium → slice close |
+| RP-05 | `ModuleNotFoundError: No module named 'app.domain.fusion_ficha'` (collection) | `73 passed` | backend `ruff check`/`format`/`mypy --strict` OK · `pytest` 73 passed (22 nuevas + 51 previas) | `e81ade1` | medium → slice close |
 
 ## Progress / Next step
 
@@ -67,7 +68,8 @@ Fuente de verdad: `BRIEF.md`. Se cita literalmente. Cada `S#` enlaza los criteri
 - [x] RP-02 cerrado: modelos + migración + subida + extracción por página (worker `gentle-ai-worker`), 10 tests, assess medium.
 - [x] RP-03 cerrado: puerto `LLMClient` + `NanLLMClient` (semáforo 5 + backoff/jitter) + `FakeLLMClient`, 28 tests, assess medium.
 - [x] RP-04 cerrado: `PliegoFicha` (20 campos `CampoExtraido[T]`) + extractor con marcadores y reintento único + modelo `ficha`, 51 tests, assess medium.
-- [ ] RP-05 en curso.
+- [x] RP-05 cerrado: extracción por documento + fusión determinista (prioridad PCAP>ANEXO>PPT>OTRO + avisos de conflicto) + verificación fuzzy de citas (≥0,9 → `verificado`), 73 tests, assess medium.
+- [ ] RP-06 en curso.
 
 ### Hallazgos RDD (no bloqueantes, follow-up)
 
@@ -85,3 +87,4 @@ Fuente de verdad: `BRIEF.md`. Se cita literalmente. Cada `S#` enlaza los criteri
 - **L6** (2026-11-12): dependencia `python-multipart` añadida — requerida por FastAPI para el endpoint de subida multipart `POST /licitaciones/{id}/documentos` (BRIEF §9, AC-02).
 - **L7** (2026-11-12): RP-03 — puerto `LLMClient` en `domain/` (puro), `NanLLMClient` y `FakeLLMClient` en `adapters/`. Fix `disable_existing_loggers=False` en `migrations/env.py`. `frontend/docs/mock/*.dc.html` (mockups de diseño ajenos) → ignorados en `.gitignore`.
 - **L8** (2026-11-12): RP-04 — esquema `PliegoFicha` (20 campos, `CampoExtraido[T]` genérico con regla de oro: no aparece → `None` sin evidencia), extractor single-call con marcadores `[[DOC:<tipo>|P:<n>]]` + reintento único → 502. Pendiente para RP-05: refactor a extracción **por documento** + fusión determinista (AC-07 exige conflictos PCAP>PPT) + verificación de citas. Dependencia `rapidfuzz` para fuzzy ≥0,9 (AC-05).
+- **L9** (2026-11-12): RP-05 — refactor a extracción por documento, `fusion_ficha.py` (prioridad + avisos), `verificacion_ficha.py` (normalización + `partial_ratio/100 ≥ 0,9` → `verificado`), `CampoExtraido.verificado`. Umbral fuzzy correcto: `partial_ratio` es 0-100, se divide por 100.
