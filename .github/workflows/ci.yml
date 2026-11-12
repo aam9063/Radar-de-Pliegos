@@ -1,0 +1,124 @@
+name: CI
+
+on:
+  push:
+    branches: ['feat/**', 'fix/**', 'dev', 'main']
+  pull_request:
+    branches: ['dev', 'main']
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-24.04
+    services:
+      db:
+        image: pgvector/pgvector:pg18
+        env:
+          POSTGRES_USER: radar
+          POSTGRES_PASSWORD: radar
+          POSTGRES_DB: radar
+        ports:
+          - '5432:5432'
+        options: >-
+          --health-cmd "pg_isready -U radar -d radar"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          enable-cache: true
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+      - name: Install deps
+        working-directory: backend
+        run: uv sync --frozen
+      - name: Lint
+        working-directory: backend
+        run: uv run ruff check .
+      - name: Format
+        working-directory: backend
+        run: uv run ruff format --check .
+      - name: Types
+        working-directory: backend
+        run: uv run mypy --strict app
+      - name: Tests
+        working-directory: backend
+        run: uv run pytest
+        env:
+          DATABASE_URL: postgresql+asyncpg://radar:radar@localhost:5432/radar
+
+  frontend:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          version: '11.4.0'
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: Install deps
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+      - name: Lint
+        working-directory: frontend
+        run: pnpm lint
+      - name: Typecheck
+        working-directory: frontend
+        run: pnpm typecheck
+      - name: Tests
+        working-directory: frontend
+        run: pnpm vitest run
+      - name: Build
+        working-directory: frontend
+        run: pnpm build
+
+  e2e:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Start stack
+        run: docker compose up -d --wait --build
+      - uses: pnpm/action-setup@v6
+        with:
+          version: '11.4.0'
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: Install deps
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+      - name: Install Playwright browsers
+        working-directory: frontend
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Run e2e
+        working-directory: frontend
+        run: pnpm playwright test
+      - name: Upload report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: frontend/playwright-report
+          retention-days: 14
+
+  docker:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build images
+        run: docker compose build

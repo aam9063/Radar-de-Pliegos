@@ -1,0 +1,38 @@
+{
+  "expediente": "23.02.01/2026/0006",
+  "documentos": [
+    { "tipo": "PCAP", "archivo": "EXP4.pdf" }
+  ],
+  "campos": {
+    "expediente": "23.02.01/2026/0006",
+    "objeto": { "valor": "ASFALTADO DIVERSAS CALLES DEL MUNICIPIO", "nota": "Anexo I 'Cuadro de características', epígrafe 1.a (página 20)" },
+    "organo_contratacion": "Ayuntamiento de Villanueva de la Cañada",
+    "procedimiento": "Abierto simplificado",
+    "tramitacion": "Ordinaria",
+    "presupuesto_base_sin_iva": { "valor": 1057642.60, "nota": "Anexo I, epígrafe 17.b: 'Principal 1.057.642,60'" },
+    "presupuesto_base_con_iva": { "valor": 1279747.55, "nota": "Anexo I, epígrafe 17.b: IVA 222.104,95 / Total 1.279.747,55 (el desglose 17.c redondea a 1.279.747,54)" },
+    "valor_estimado": { "valor": 1269171.12, "nota": "Anexo I, epígrafe 17.d: 'Valor 1.269.171,12' = 1.057.642,60 (PBL principal sin IVA) + 211.528,52 (20% de modificaciones); sin IVA, a diferencia del total 1.279.747,55 del epígrafe 17.b" },
+    "revision_precios": { "valor": { "aplica": false, "formula": null }, "nota": "Anexo I, epígrafe 11: 'Sujeto a revisión: NO'" },
+    "plazo_ejecucion": { "valor": { "valor": "3", "unidad": "meses" }, "nota": "Anexo I, epígrafe 5: 'Plazo ejecución 3 meses'" },
+    "clasificacion_exigida": [
+      { "grupo": "G", "subgrupo": "4", "categoria": "4" }
+    ],
+    "criterios_adjudicacion": [
+      { "nombre": "Memoria técnica de ejecución", "tipo": "juicio_valor", "ponderacion": "20 puntos" },
+      { "nombre": "Incremento de superficie de pavimentación completa con fresado", "tipo": "automatico", "ponderacion": "50 puntos" },
+      { "nombre": "Valorización del material procedente del fresado", "tipo": "automatico", "ponderacion": "10 puntos" },
+      { "nombre": "Garantía de suministro y trazabilidad de mezcla bituminosa", "tipo": "automatico", "ponderacion": "8 puntos" },
+      { "nombre": "Ampliación del plazo de garantía", "tipo": "automatico", "ponderacion": "5 puntos" },
+      { "nombre": "Equipo adicional de extendido y compactación de respaldo", "tipo": "automatico", "ponderacion": "4 puntos" },
+      { "nombre": "Extendedora con sistema de aspiración de humos", "tipo": "automatico", "ponderacion": "3 puntos" }
+    ],
+    "penalidades": [
+      "Diarias por demora: 0,60 euros por cada 1.000 euros del precio del contrato, IVA excluido (Anexo I, epígrafe 14)",
+      "Por incumplimiento o cumplimiento defectuoso: entre el 10 y el 40% del precio de adjudicación, IVA excluido (Anexo I, epígrafe 14)",
+      "50% del importe de lo subcontratado por incumplimiento de la cláusula 21 en materia de subcontratación"
+    ],
+    "garantia_provisional": { "valor": "No se exige", "nota": "Anexo I, epígrafe 7: 'Provisional: NO'" },
+    "garantia_definitiva": "5% del precio final ofertado, excluido el Impuesto sobre el Valor Añadido",
+    "subcontratacion_limites": { "valor": "Se permite subcontratar con un límite del 50% del contrato", "nota": "Anexo I, epígrafe 15: 'Límite (%): 50'" }
+  }
+}

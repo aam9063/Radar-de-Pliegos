@@ -1,0 +1,27 @@
+# Environment
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Node
+node_modules/
+dist/
+
+# Playwright
+playwright-report/
+test-results/
+coverage/
+
+# Eval data
+# pliegos/ are real PDFs (large, downloaded by hand) — not versioned.
+evals/pliegos/
+
+# OS
+.DS_Store
+Thumbs.db
