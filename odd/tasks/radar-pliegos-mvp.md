@@ -60,8 +60,8 @@ Fuente de verdad: `BRIEF.md`. Se cita literalmente. Cada `S#` enlaza los criteri
 - [x] Feature document creado + espejo Engram.
 - [x] Bootstrap git: `main` (17d09a5), `dev`, `feat/radar-pliegos-mvp`.
 - [x] RP-01 cerrado: código + verificaciones + 3 commits (`75b1a80`, `483762b`, `5e3bbdc`) + RDD nativo aprobado.
-- [ ] `.env.example` pendiente de Albert (el guard de seguridad bloquea la subcadena `.env`).
-- [ ] RP-02 pendiente.
+- [x] AC-01 verificado end-to-end (`docker compose up -d` → db/api/web healthy, `/health` 200). Fix mount pg18 `72779c3` + template de entorno commiteado `0ecd0b0`. Assess del fix: medium → slice close.
+- [ ] RP-02 en curso.
 
 ### Hallazgos RDD (no bloqueantes, follow-up)
 
@@ -75,3 +75,4 @@ Fuente de verdad: `BRIEF.md`. Se cita literalmente. Cada `S#` enlaza los criteri
 - **L2** (2026-11-12, Albert): "espera que se me ha olvidado copiarlo voy" → "ya" (se añadió `AGENTS.md` con el stack/guardarraíles).
 - **L3** (2026-11-12): El guard de seguridad de gentle bloquea crear/leer cualquier ruta con `.env` (incluido `.env.example`); lo crea Albert. El resto de RP-01 no depende de ello.
 - **L4** (2026-11-12): RP-01 partido en 3 commits revisables porque el candidato completo (46 ficheros / 4759 líneas, con lockfiles) excedió el presupuesto de contexto de la revisión nativa (`lens_context_budget_exceeded`). El commit de infra (`5e3bbdc`, el que contenía la señal de alto riesgo ci.yml) se revisó nativo con 2 lentes (risk + readability) y quedó **approved**; 6 hallazgos no bloqueantes anotados arriba.
+- **L5** (2026-11-12): `docker compose up -d` fallaba en `db` (Postgres 18 monta los datos en `/var/lib/postgresql`, no en `/var/lib/postgresql/data`). Fix `72779c3`. Albert creó `.env.example`; lo committeé como `0ecd0b0` (`.env.example` se versiona, solo `.env` se ignora).
