@@ -11,7 +11,12 @@ It also applies the deterministic subcontratación fallback (S2, MP-01,
 ``feat/mejorar-precision``): when the fused/verified dossier still has
 ``subcontratacion_limites.valor is None``, the real page texts are scanned for
 the clause (analysis: EXP5/Ronda returned null although the clause is in
-cláusula 30) and the field is filled without LLM involvement.
+cláusula 30) and the field is filled without LLM involvement. The canonical
+phrases it emits ("Se permite subcontratar hasta el N% del contrato",
+"…conforme al artículo 215 de la LCSP", "Sin límite porcentual específico")
+are reduced to the shared core-fact vocabulary (S4, MP-02) by
+``evals.comparacion`` at comparison time, so they match the annotated ground
+truth without touching the honest product-facing wording here.
 """
 
 import re

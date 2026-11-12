@@ -32,6 +32,35 @@ rule cites the concrete miss from ``evals/results/2026-11-12-analisis.md`` (the
   ``grupo`` values like ``"G"`` are left untouched by this rule.
 - ``procedimiento`` / ``tramitacion``: a leading ``"Procedimiento "`` /
   ``"Tramitación "`` prefix is dropped after case normalization.
+
+Canonical core facts (S4, MP-02, ``feat/mejorar-precision``): two fields hold
+long interpretive phrases the honest extraction can never match verbatim, so
+BOTH sides (ground truth and extracted value) are reduced to their core facts
+before comparing. Format and clear facts only — two genuinely different
+penalties or limits never become equal, a wrong number never passes, and a
+value shaped outside the canonical vocabulary is left untouched (it compares
+literally, nothing is guessed):
+
+- ``subcontratacion_limites`` — closed vocabulary of 3 core facts:
+  a numeric limit → ``"hasta el N%"`` (a bare ``"50 %"`` from the LLM, the
+  ``"Se permite subcontratar hasta el 50% del contrato"`` fallback phrase and
+  the annotated ``"hasta el 50%"`` of EXP4/Villanueva de la Cañada all land
+  here, and the ``"Límite (%): 50"`` label of Anexo I too); no numeric limit
+  but a remission to art. 215 → ``"art. 215 lcsp"`` (EXP1/EXP2/EXP3);
+  explicit ``"sin límite"`` without the art. 215 remission →
+  ``"sin limite especifico"`` (EXP5/Ronda). Any other shape (e.g. "no se
+  permite subcontratar") stays literal.
+- ``penalidades`` — each list item becomes ``"<category>:<sorted cifras>"``:
+  the numeric facts are the percentage bounds (``\d+ %``, including ranges
+  without a ``%`` on the first bound — ``"entre el 10 y el 40%"`` — and
+  repeated bounds — ``"del 5% y el 10%"``) and euro amounts (``"0,60 euros"``,
+  ``"1.000 €"``; thousand dots removed, decimal comma normalized). Legal
+  article numbers ("artículos 192 y 193") are NOT cifras. The category is the
+  first hit in a closed keyword set (``coercit``, ``demora``/``retras``,
+  ``subcontrat``, ``defectuos``, ``social``, ``resoluc``, ``adscripcion``,
+  ``documentac``/``cumplimenta``/``requerimiento``, ``formalizac``,
+  ``retirada``, ``plazo``); an item with no keyword hit stays literal. The
+  annotated lists of the 5 pliegos reduce to the facts pinned in the tests.
 """
 
 import json
@@ -112,8 +141,14 @@ def _texto_campo(campo: str, texto: str) -> str:
     """Apply the format-only rules of ``campo`` to one free-text value.
 
     ``texto`` must already be base-normalized (lowercase, no accents, collapsed
-    whitespace); the rules only strip redundant leading format words.
+    whitespace); the rules only strip redundant leading format words — and, for
+    ``penalidades``/``subcontratacion_limites``, reduce the phrase to its
+    canonical core facts (S4, MP-02, see the module docstring).
     """
+    if campo == "subcontratacion_limites":
+        return _texto_subcontratacion(texto)
+    if campo == "penalidades":
+        return _hecho_penalidad(texto)
     if campo in ("garantia_provisional", "garantia_definitiva") and texto.startswith(
         _SINONIMOS_SIN_GARANTIA
     ):
@@ -143,6 +178,98 @@ def _texto_cpv(texto: str) -> str:
     codigos = [f for f in fragmentos if re.fullmatch(r"\d{8}(?:-\d)?", f)]
     elegidos = codigos if codigos else fragmentos
     return ", ".join(elegidos)
+
+
+# --- Canonical core facts (S4, MP-02) ---------------------------------------
+
+# Percentage figures, including ranges written without a "%" on the first
+# bound ("entre el 10 y el 40%", EXP4/Villanueva) and with repeated bounds
+# ("entre el 5% y el 10%", EXP1/Barbadás coercitive fine).
+_RE_PCT_RANGO = re.compile(
+    r"(\d+(?:[.,]\d+)?)(?:\s*(?:y|al|a|-)\s*(?:el\s+)?(\d+(?:[.,]\d+)?))?\s*%"
+)
+# Euro amounts: "0,60 euros" / "1.000 euros" (EXP1/EXP4 demora penalty), "50 €".
+_RE_EUROS = re.compile(r"(\d+(?:\.\d{3})*(?:,\d+)?)\s*(?:€|euros?)")
+# Bare percentage for the subcontracting limit ("50 %" — analysis 4.2,
+# Villanueva de la Cañada: the LLM returned just "50 %"; "hasta el 50%").
+_RE_PCT_SIMPLE = re.compile(r"(\d+(?:[.,]\d+)?)\s*%")
+# "Límite (%): 50" label (EXP4, Anexo I epígrafe 15; same rule as ejecucion).
+_RE_ETIQUETA_LIMITE = re.compile(
+    r"limite\s*(?:\(\s*%\s*\)|maximo|maxima)?\s*[:\-]\s*(\d+(?:[.,]\d+)?)"
+)
+# Remission to art. 215 LCSP ("artículo 215", "art. 215").
+_RE_ARTICULO_215 = re.compile(r"art(?:iculo|\.)\s*215")
+
+# Closed category set for penalties (S4): first hit in this order wins, so a
+# "multa coercitiva por cumplimiento defectuoso" (EXP1 pen. 5) counts as
+# coercit, not defectuos. Each entry cites the pliego whose annotation it
+# canonicalizes: coercit/demora/subcontrat/defectuos (EXP1), social/plazo
+# (EXP5), documentac (EXP2/EXP3), formalizac (EXP1), adscripcion (EXP5).
+_CATEGORIAS_PENALIDAD: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("coercit", ("coercit",)),
+    ("demora", ("demora", "retras")),
+    ("subcontrat", ("subcontrat",)),
+    ("defectuos", ("defectuos",)),
+    ("social", ("social",)),
+    ("resoluc", ("resoluc",)),
+    ("adscripcion", ("adscri",)),
+    ("documentac", ("documentac", "cumplimenta", "requerimiento")),
+    ("formalizac", ("formaliza",)),
+    ("retirada", ("retirada",)),
+    ("plazo", ("plazo",)),
+)
+
+
+def _valor_numerico(crudo: str) -> float:
+    """Parse a Spanish number: "1.000"/"1.000,50" keep their thousand dots,
+    "0,60" uses the decimal comma → float."""
+    valor = crudo
+    if re.fullmatch(r"\d{1,3}(?:\.\d{3})+(?:,\d+)?", valor):
+        valor = valor.replace(".", "")
+    return float(valor.replace(",", "."))
+
+
+def _cifras_de(texto: str) -> list[str]:
+    """Numeric facts of one penalty: percentage bounds + euro amounts, sorted
+    ascending and deduplicated ("0,60 euros por cada 1.000 euros" →
+    ``["0.6", "1000"]``; "entre el 10 y el 40%" → ``["10", "40"]``).
+    Legal article numbers carry no ``%``/``€`` and are never cifras."""
+    valores: set[float] = set()
+    for patron in (_RE_PCT_RANGO, _RE_EUROS):
+        for coincidencia in patron.finditer(texto):
+            valores.update(_valor_numerico(grupo) for grupo in coincidencia.groups() if grupo)
+    return [f"{valor:g}" for valor in sorted(valores)]
+
+
+def _hecho_penalidad(texto: str) -> str:
+    """Reduce one penalty phrase to ``"<category>:<sorted cifras>"`` (S4).
+
+    Both the ground truth and the extracted value pass through here, so only
+    the format and the clear core facts are compared: "un 10% de las unidades
+    de obra no ejecutadas en plazo" (analysis 4.1, EXP5/Ronda) equals the
+    annotated "10% de las unidades de obra…" (both ``plazo:10``), while a wrong
+    number or a different motive still fails. An item outside the closed
+    category set stays literal — nothing is guessed.
+    """
+    for categoria, pistas in _CATEGORIAS_PENALIDAD:
+        if any(pista in texto for pista in pistas):
+            cifras = _cifras_de(texto)
+            return f"{categoria}:{','.join(cifras)}" if cifras else categoria
+    return texto
+
+
+def _texto_subcontratacion(texto: str) -> str:
+    """Reduce the subcontracting limit to its canonical core fact (S4): a
+    numeric limit wins over the art. 215 remission, which wins over an
+    explicit "sin límite". Any other shape stays literal."""
+    coincidencia = _RE_PCT_SIMPLE.search(texto) or _RE_ETIQUETA_LIMITE.search(texto)
+    if coincidencia:
+        return f"hasta el {f'{_valor_numerico(coincidencia.group(1)):g}'}%"
+    if _RE_ARTICULO_215.search(texto):
+        return "art. 215 lcsp"
+    if "sin limite" in texto:
+        return "sin limite especifico"
+    return texto
 
 
 def normalizar_valor(campo: str | None, valor: Any) -> Any:
