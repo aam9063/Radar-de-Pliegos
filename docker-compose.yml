@@ -23,6 +23,8 @@ services:
       NAN_BASE_URL: ${NAN_BASE_URL:-https://api.nan.builders/v1}
     ports:
       - '8000:8000'
+    volumes:
+      - storage_data:/app/storage
     depends_on:
       db:
         condition: service_healthy
@@ -52,3 +54,4 @@ services:
 
 volumes:
   db_data:
+  storage_data:
