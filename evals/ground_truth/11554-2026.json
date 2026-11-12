@@ -1,0 +1,32 @@
+{
+  "expediente": "11554/2026",
+  "documentos": [
+    { "tipo": "PCAP", "archivo": "EXP3.pdf" }
+  ],
+  "campos": {
+    "expediente": "11554/2026",
+    "objeto": { "valor": "Terminación de repavimentación de varias calles de los núcleos urbanos de Candelaria (Fase II) y modificado Lote 1", "nota": "página 1, 'Asunto' y tabla de datos generales" },
+    "organo_contratacion": "Alcaldesa-Presidenta del Ayuntamiento de Candelaria",
+    "cpv": { "valor": "45233000-9, 45233223-8, 45233294-6", "nota": "tabla de datos generales (páginas 1 y 8); la cláusula 1.2 repite '45233000-9, 45233223, 45233294' sin sufijo" },
+    "procedimiento": "Abierto",
+    "tramitacion": "Urgente",
+    "presupuesto_base_sin_iva": { "valor": 913168.38, "nota": "página 9: 'IMPORTE SIN IGIC 913.168,38€'" },
+    "presupuesto_base_con_iva": { "valor": 977090.17, "nota": "PBL con IGIC 7% (páginas 1, 8 y 9)" },
+    "valor_estimado": 913168.38,
+    "revision_precios": { "valor": { "aplica": false, "formula": null }, "nota": "cláusula sexta: 'No procede'" },
+    "plazo_ejecucion": { "valor": { "valor": "3", "unidad": "meses" }, "nota": "cláusula séptima: 'se estima como suficiente un plazo de 3 MESES'" },
+    "clasificacion_exigida": [
+      { "grupo": "G", "subgrupo": "4", "categoria": "4" }
+    ],
+    "criterios_adjudicacion": [
+      { "nombre": "Valor económico de la proposición presentada", "tipo": "automatico", "ponderacion": "100 puntos" }
+    ],
+    "penalidades": [
+      "Penalidades diarias por demora de 0,60 euros por cada 1.000 euros del precio del contrato",
+      "3% del presupuesto base de licitación si no se cumplimenta el requerimiento de documentación",
+      "Por incumplimiento o cumplimiento defectuoso: las establecidas en los artículos 192 y 193 de la LCSP"
+    ],
+    "garantia_definitiva": "5% del precio final ofertado, excluido el IGIC",
+    "subcontratacion_limites": "Se autoriza la subcontratación parcial de las prestaciones accesorias conforme al artículo 215 de la LCSP; sin límite porcentual específico"
+  }
+}

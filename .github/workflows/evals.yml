@@ -1,0 +1,33 @@
+name: Evals
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  eval:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          enable-cache: true
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+      - name: Install deps
+        working-directory: backend
+        run: uv sync --frozen
+      - name: Run eval
+        working-directory: backend
+        run: uv run python -m evals.run
+        env:
+          NAN_API_KEY: ${{ secrets.NAN_API_KEY }}
+      - name: Upload report
+        uses: actions/upload-artifact@v7
+        with:
+          name: eval-report
+          path: evals/results/
+          retention-days: 30

@@ -1,0 +1,36 @@
+{
+  "_comentario": "Plantilla de ejemplo para annotar un pliego (los ficheros que empiezan por '_' no se evalúan). Copia este fichero a ground_truth/<expediente>.json y rellénalo a mano. Cada campo de 'campos' es opcional: los campos no anotados se esperan ausentes (null) en la ficha extraída. Puedes anotar el valor directo o un objeto {\"valor\": ..., \"nota\": \"...\"}. Los campos compuestos (plazo_ejecucion, revision_precios) se anotan como objeto; los de lista (clasificacion_exigida, criterios_adjudicacion, solvencias, penalidades) como array. 'documentos' lista los PDF del pliego con su tipo (PCAP, ANEXO, PPT, OTRO); cada 'archivo' debe existir en evals/pliegos/.",
+  "expediente": "CN-2026/00-EJEMPLO",
+  "documentos": [
+    { "tipo": "PCAP", "archivo": "CN-2026-00-EJEMPLO-pcap.pdf" },
+    { "tipo": "PPT", "archivo": "CN-2026-00-EJEMPLO-ppt.pdf" }
+  ],
+  "campos": {
+    "expediente": "CN-2026/00-EJEMPLO",
+    "objeto": { "valor": "Rehabilitación energética del edificio consistorial", "nota": "página 3 del PCAP" },
+    "organo_contratacion": "Ayuntamiento de ejemplo",
+    "cpv": "45200000-7",
+    "procedimiento": "Abierto",
+    "tramitacion": "Ordinaria",
+    "presupuesto_base_sin_iva": 1250000.0,
+    "presupuesto_base_con_iva": 1512500.0,
+    "valor_estimado": null,
+    "revision_precios": { "aplica": true, "formula": "fórmula tipo Polinómica" },
+    "plazo_ejecucion": { "valor": "12", "unidad": "meses" },
+    "fecha_limite_presentacion": "2026-12-15T14:00:00",
+    "clasificacion_exigida": [
+      { "grupo": "1", "subgrupo": "6", "categoria": "e" },
+      { "grupo": "3", "subgrupo": "2", "categoria": "c" }
+    ],
+    "solvencia_economica": ["Volumen anual de negocios de 500.000 euros"],
+    "solvencia_tecnica": ["Contrato principal de obra similar en los últimos 5 años"],
+    "criterios_adjudicacion": [
+      { "nombre": "Precio", "tipo": "automatico", "ponderacion": "55 puntos" },
+      { "nombre": "Calidad", "tipo": "juicio_valor", "ponderacion": "45 puntos" }
+    ],
+    "penalidades": ["0,5% por cada día de retraso"],
+    "garantia_provisional": "No se exige",
+    "garantia_definitiva": "5% del presupuesto de adjudicación",
+    "subcontratacion_limites": "Hasta el 30% del contrato"
+  }
+}
