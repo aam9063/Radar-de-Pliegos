@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     nan_max_retries: int = 3
     nan_backoff_base_seconds: float = 0.5
     extraction_model: str = "deepseek-v4-flash"
+    summary_model: str = "deepseek-v4-flash"
 
 
 @lru_cache

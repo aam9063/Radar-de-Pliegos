@@ -41,3 +41,14 @@ class FichaOut(BaseModel):
     modelo: str
     creada_en: datetime
     avisos: list[str]
+
+
+class DecisionOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    licitacion_id: int
+    resultado: str
+    razones: list[dict[str, Any]]
+    resumen: str | None
+    creada_en: datetime

@@ -1,19 +1,40 @@
-"""Endpoints for licitaciones, PDF upload and structured extraction."""
+"""Endpoints for licitaciones, PDF upload, structured extraction and decision."""
 
+from datetime import date
 from typing import Annotated
 
 import pymupdf
 from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, status
+from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_llm_client
-from app.api.schemas import DocumentoOut, FichaOut, LicitacionCreate, LicitacionOut
+from app.api.deps import get_hoy, get_llm_client
+from app.api.schemas import (
+    DecisionOut,
+    DocumentoOut,
+    FichaOut,
+    LicitacionCreate,
+    LicitacionOut,
+)
 from app.core.config import Settings, get_settings
-from app.db.models import Documento, EstadoLicitacion, Ficha, Licitacion, Pagina, TipoDocumento
+from app.db.models import (
+    Decision,
+    Documento,
+    EstadoLicitacion,
+    Ficha,
+    Licitacion,
+    Pagina,
+    TipoDocumento,
+)
 from app.db.session import get_session
 from app.domain.llm import LLMClient, LLMError
 from app.domain.pliego_ficha import ExtractionInvalidOutputError
+from app.services.decision_service import (
+    FichaNoDisponibleError,
+    PerfilNoConfiguradoError,
+    calcular_decision_para_licitacion,
+)
 from app.services.document_storage import save_pdf
 from app.services.ficha_extraction import extract_ficha_for_licitacion
 from app.services.page_extraction import extract_pages
@@ -23,6 +44,7 @@ router = APIRouter(tags=["licitaciones"])
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 LLMDep = Annotated[LLMClient, Depends(get_llm_client)]
+HoyDep = Annotated[date, Depends(get_hoy)]
 
 
 @router.post(
@@ -149,3 +171,39 @@ async def obtener_ficha(licitacion_id: int, session: SessionDep) -> Ficha:
             detail=f"La licitación {licitacion_id} aún no tiene ficha extraída",
         )
     return ficha
+
+
+@router.get("/licitaciones/{licitacion_id}/decision", response_model=DecisionOut)
+async def decidir_licitacion(
+    licitacion_id: int,
+    session: SessionDep,
+    settings: SettingsDep,
+    llm_client: LLMDep,
+    hoy: HoyDep,
+) -> Decision:
+    """Compute the deterministic decision (S6) and persist it.
+
+    The engine is pure code, never the LLM; the LLM is asked afterwards to
+    write the 3-5 sentence summary from the already-computed reasons only. A
+    summary failure maps to HTTP 502 without persisting anything half-done.
+    """
+    await _get_licitacion_or_404(session, licitacion_id)
+    try:
+        return await calcular_decision_para_licitacion(
+            session, licitacion_id, llm_client, settings, hoy
+        )
+    except FichaNoDisponibleError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
+    except PerfilNoConfiguradoError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(exc),
+        ) from exc
+    except (LLMError, ValidationError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="El proveedor de IA no pudo redactar el resumen de la decisión.",
+        ) from exc

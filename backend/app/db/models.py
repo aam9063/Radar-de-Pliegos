@@ -1,7 +1,7 @@
 """SQLAlchemy 2 async models for the MVP schema.
 
-`licitacion`, `documento` and `pagina` (RP-02); `ficha` (RP-04). perfil_empresa
-and decision arrive with RP-06.
+`licitacion`, `documento` and `pagina` (RP-02); `ficha` (RP-04); `perfil_empresa`
+and `decision` (RP-06).
 """
 
 import enum
@@ -20,6 +20,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+
+from app.domain.motor_decision import Resultado
 
 
 class Base(DeclarativeBase):
@@ -121,3 +123,45 @@ class Ficha(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     avisos: Mapped[list[str]] = mapped_column(JSONB, nullable=False, default=list)
+
+
+class PerfilEmpresa(Base):
+    """Single editable company profile (S5, RP-06).
+
+    ``datos`` holds the serialized, validated ``PerfilEmpresa`` domain schema.
+    There is at most one row: the services layer upserts the same row on PUT.
+    """
+
+    __tablename__ = "perfil_empresa"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    datos: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+
+
+class Decision(Base):
+    """Deterministic GO/NO-GO/REVISAR verdict of a licitación (S6, RP-06).
+
+    ``razones`` list the serialized ``Razon`` objects computed by the pure
+    engine; ``resumen`` is the LLM-written 3-5 sentence summary derived from
+    those reasons only. One row per licitación: re-evaluation replaces it.
+    """
+
+    __tablename__ = "decision"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    licitacion_id: Mapped[int] = mapped_column(
+        ForeignKey("licitacion.id", ondelete="CASCADE"), nullable=False
+    )
+    resultado: Mapped[Resultado] = mapped_column(
+        Enum(
+            Resultado,
+            name="resultado_decision",
+            values_callable=lambda e: [member.value for member in e],
+        ),
+        nullable=False,
+    )
+    razones: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False, default=list)
+    resumen: Mapped[str | None] = mapped_column(Text, nullable=True)
+    creada_en: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )

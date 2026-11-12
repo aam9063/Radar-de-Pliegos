@@ -63,7 +63,7 @@ async def client(
     session_maker = async_sessionmaker(engine, expire_on_commit=False)
 
     async with engine.begin() as conn:
-        await conn.execute(text("TRUNCATE licitacion CASCADE"))
+        await conn.execute(text("TRUNCATE licitacion, perfil_empresa CASCADE"))
 
     settings = Settings(storage_dir=str(tmp_path))
     app = create_app()
