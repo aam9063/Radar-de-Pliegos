@@ -40,6 +40,12 @@ from evals.ejecucion import extraer_ficha_de_pdfs
 from evals.ground_truth import GroundTruth, GroundTruthInvalida, cargar_ground_truths
 from evals.reporte import escribir_informe, generar_informe, generar_nombre_informe
 
+# Windows: the default ProactorEventLoop races with async TLS teardown in the
+# httpx2/httpcore2/anyio stack used by the openai SDK and raises
+# "RuntimeError: Event loop is closed"; the selector loop avoids that race.
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 
 def resolver_dir_datos(argumento: str | None, env_evals_dir: str | None) -> Path:
     """Resolve the evaluation data directory: --data-dir > EVALS_DIR > repo default."""
@@ -71,6 +77,27 @@ async def _evaluar_pliego(
         comparaciones=comparaciones,
         ficha_obtenida=ficha,
     )
+
+
+async def _evaluar_todos(
+    ground_truths: Sequence[GroundTruth],
+    dir_pliegos: Path,
+    llm_client: LLMClient,
+    model: str,
+) -> tuple[list[EvaluacionPliego], list[tuple[str, str]]]:
+    """Evaluate every pliego on a single event loop (the LLM client is shared)."""
+    evaluaciones: list[EvaluacionPliego] = []
+    pliegos: list[tuple[str, str]] = []
+    for ground_truth in ground_truths:
+        try:
+            evaluacion = await _evaluar_pliego(ground_truth, dir_pliegos, llm_client, model)
+        except _errores_recuperables() as exc:
+            print(f"Pliego '{ground_truth.expediente}' falló: {exc}", file=sys.stderr)
+            pliegos.append((ground_truth.expediente, f"fallo: {type(exc).__name__}: {exc}"))
+            continue
+        evaluaciones.append(evaluacion)
+        pliegos.append((ground_truth.expediente, "correcto"))
+    return evaluaciones, pliegos
 
 
 def main(
@@ -113,19 +140,9 @@ def main(
         )
         return 1
 
-    evaluaciones: list[EvaluacionPliego] = []
-    pliegos: list[tuple[str, str]] = []
-    for ground_truth in ground_truths:
-        try:
-            evaluacion = asyncio.run(
-                _evaluar_pliego(ground_truth, dir_pliegos, llm_client, settings.extraction_model)
-            )
-        except _errores_recuperables() as exc:
-            print(f"Pliego '{ground_truth.expediente}' falló: {exc}", file=sys.stderr)
-            pliegos.append((ground_truth.expediente, f"fallo: {type(exc).__name__}: {exc}"))
-            continue
-        evaluaciones.append(evaluacion)
-        pliegos.append((ground_truth.expediente, "correcto"))
+    evaluaciones, pliegos = asyncio.run(
+        _evaluar_todos(ground_truths, dir_pliegos, llm_client, settings.extraction_model)
+    )
 
     metricas = calcular_metricas(evaluaciones)
     informe = generar_informe(

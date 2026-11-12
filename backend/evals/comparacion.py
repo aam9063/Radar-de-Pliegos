@@ -75,7 +75,7 @@ def _valores_iguales(esperado: Any, obtenido: Any) -> bool:
     if esperado is None or obtenido is None:
         return False
     if isinstance(esperado, bool) or isinstance(obtenido, bool):
-        return esperado == obtenido
+        return bool(esperado == obtenido)
     if isinstance(esperado, (int, float)) and isinstance(obtenido, (int, float)):
         return math.isclose(
             float(esperado), float(obtenido), rel_tol=FLOAT_REL_TOLERANCE, abs_tol=1e-9
@@ -94,7 +94,7 @@ def _valores_iguales(esperado: Any, obtenido: Any) -> bool:
         return json.dumps(esperado, sort_keys=True, ensure_ascii=False) == json.dumps(
             obtenido, sort_keys=True, ensure_ascii=False
         )
-    return esperado == obtenido
+    return bool(esperado == obtenido)
 
 
 def comparar_ficha(
