@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     storage_dir: str = "storage"
     nan_api_key: str | None = None
     nan_base_url: str = "https://api.nan.builders/v1"
+    nan_max_concurrency: int = 5
+    nan_max_retries: int = 3
+    nan_backoff_base_seconds: float = 0.5
     extraction_model: str = "deepseek-v4-flash"
 
 
