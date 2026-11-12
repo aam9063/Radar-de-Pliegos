@@ -42,6 +42,10 @@ Reglas:
   [[DOC:<tipo>|P:<número>]], y la cita es un fragmento literal de esa página de
   30 palabras como máximo.
 - "confianza" es "alta", "media" o "baja" según lo explícito del dato.
+- Si el pliego exige clasificación de empresas pero no define solvencias
+  económicas o técnicas propias, "solvencia_economica" y "solvencia_tecnica"
+  van con "valor": null; esa clasificación se extrae SOLO en
+  "clasificacion_exigida".
 """
 
 _RETRY_INSTRUCTIONS = """\

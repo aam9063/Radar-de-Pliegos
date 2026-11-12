@@ -33,6 +33,6 @@
     ],
     "garantia_provisional": { "valor": "No se exige", "nota": "Anexo I, epígrafe 7: 'Provisional: NO'" },
     "garantia_definitiva": "5% del precio final ofertado, excluido el Impuesto sobre el Valor Añadido",
-    "subcontratacion_limites": { "valor": "Se permite subcontratar con un límite del 50% del contrato", "nota": "Anexo I, epígrafe 15: 'Límite (%): 50'" }
+    "subcontratacion_limites": { "valor": "hasta el 50%", "nota": "Anexo I, epígrafe 15: 'Límite (%): 50'" }
   }
 }

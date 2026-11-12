@@ -106,7 +106,7 @@ Subagentes: solo con motivo explícito (exploración amplia, escritores en paral
 
 **Ramas**
 - `main`: estable. Solo Albert mergea a `main`.
-- `dev`: integración. Solo Albert mergea a `dev`.
+- `dev`: integración. Albert, o el agente tras CI en verde (autorizado el 2026-11-12).
 - Trabajo: `feat/<slug>` o `fix/<slug>`, creadas **siempre desde `dev` actualizada**. Ejemplo: `feat/rp-04-pliego-extraction`.
 - Nunca commitees directamente en `main` ni en `dev`. Si estás en una de ellas, crea la rama antes de escribir.
 
@@ -116,15 +116,15 @@ Subagentes: solo con motivo explícito (exploración amplia, escritores en paral
 - Un commit = una unidad de trabajo coherente con sus tests. Nada de commits "wip" ni de mezclar refactor y feature.
 - Antes de cada commit: lint, tipos y tests del área tocada en verde.
 
-**Push (siempre preguntando)**
-- **Nunca hagas `git push` sin preguntar.** Pregunta exactamente: "¿Hago push de `<rama>` a `origin`?" y espera un sí explícito para esa rama.
+**Push (autorizado)**
+- Puedes hacer `git push` sin preguntar (autorizado por Albert el 2026-11-12).
 - Nunca `--force` ni `--force-with-lease`.
-- No actives los modos `YOLO`, `Super Yolo` ni `auto` de gentle-shell para saltarte esta regla: conceden push y PR por su cuenta.
+- No actives los modos `YOLO`, `Super Yolo` ni `auto` de gentle-shell.
 
-**Pull requests (las abre Albert)**
-- **Nunca abras PRs** (ni `gh pr create` ni la API de GitHub).
+**Pull requests y merge (sobre `dev`)**
+- Puedes crear PRs hacia `dev` y, tras comprobar el CI en verde, **mergear a `dev`** (autorizado el 2026-11-12). Si el CI falla, corrígelo hasta dejarlo en verde.
+- **Nunca mergees de `dev` a `main`** (eso lo hace Albert). Tampoco hagas rebase ni cherry-pick sobre `main` ni `dev`.
 - Al cerrar una feature, deja en el feature document un borrador de PR en inglés: título, resumen, criterios de aceptación cubiertos, cómo probarlo y resultado de RDD.
-- Nunca hagas merge, rebase ni cherry-pick sobre `main` o `dev`.
 
 ## 7. CI (GitHub Actions)
 
