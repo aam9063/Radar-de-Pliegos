@@ -33,7 +33,7 @@ Fuente de verdad: `BRIEF.md`. Se cita literalmente. Cada `S#` enlaza los criteri
 
 ## Tasks
 
-- [ ] **RP-01** Esqueleto del monorepo, Docker Compose, `/health`, CI mínimo — cubre AC-01, AC-11 — route: inline — commit: —
+- [x] **RP-01** Esqueleto del monorepo, Docker Compose, `/health`, CI mínimo — cubre AC-01, AC-11 — route: inline — commit: `75b1a80` `483762b` `5e3bbdc`
 - [ ] **RP-02** Modelos, migraciones y subida de PDFs con extracción por página — cubre AC-02 — route: — commit: —
 - [ ] **RP-03** Puerto `LLMClient`, adaptador NaN y cliente falso con límites — cubre AC-10 — route: — commit: —
 - [ ] **RP-04** Esquema `PliegoFicha` y extracción con reintento — cubre AC-03, AC-04 — route: — commit: —
@@ -53,17 +53,25 @@ Fuente de verdad: `BRIEF.md`. Se cita literalmente. Cada `S#` enlaza los criteri
 
 | Tarea | RED | GREEN | Lint/tipos/tests | Commit | RDD assess |
 | --- | --- | --- | --- | --- | --- |
-| RP-01 | `ModuleNotFoundError: No module named 'app.main'` (test_health) | `1 passed` | backend `ruff check`/`format`/`mypy --strict` OK · `pytest` 1 passed · frontend `eslint`/`tsc --noEmit`/`vitest`/`build`/`prettier` OK · `docker compose config` OK · `docker compose build` OK | — | — |
+| RP-01 | `ModuleNotFoundError: No module named 'app.main'` (test_health) | `1 passed` | backend `ruff check`/`format`/`mypy --strict` OK · `pytest` 1 passed · frontend `eslint`/`tsc --noEmit`/`vitest`/`build`/`prettier` OK · `docker compose config` OK · `docker compose build` OK | `75b1a80` `483762b` `5e3bbdc` | infra (`5e3bbdc`) high → native review **approved** |
 
 ## Progress / Next step
 
 - [x] Feature document creado + espejo Engram.
 - [x] Bootstrap git: `main` (17d09a5), `dev`, `feat/radar-pliegos-mvp`.
-- [ ] RP-01 pendiente: commit + RDD assess · `.env.example` (bloqueado por el guard de seguridad de gentle → lo crea Albert; compose usa `${NAN_API_KEY:-}` así que no bloquea el arranque).
+- [x] RP-01 cerrado: código + verificaciones + 3 commits (`75b1a80`, `483762b`, `5e3bbdc`) + RDD nativo aprobado.
+- [ ] `.env.example` pendiente de Albert (el guard de seguridad bloquea la subcadena `.env`).
 - [ ] RP-02 pendiente.
+
+### Hallazgos RDD (no bloqueantes, follow-up)
+
+- `R2-hardcoded-creds` (docker-compose.yml:4): credenciales dev `radar/radar` en compose; aceptable en local, revisar antes de cualquier despliegue.
+- `R2-dup-runtime-config` (ci.yml:27) y `R2-implicit-compose` (ci.yml:88): duplicación de `DATABASE_URL` en CI y compose implícito en e2e.
+- `R2-monolithic-plan` (odd/tasks:1), `R1-001` (ci.yml:34), `R1-002` (docker-compose.yml:9): informativos.
 
 ## Log
 
 - **L1** (2026-11-12, Albert): "Lee el BRIEF.md, entiendelo y empieza a implementar".
 - **L2** (2026-11-12, Albert): "espera que se me ha olvidado copiarlo voy" → "ya" (se añadió `AGENTS.md` con el stack/guardarraíles).
 - **L3** (2026-11-12): El guard de seguridad de gentle bloquea crear/leer cualquier ruta con `.env` (incluido `.env.example`); lo crea Albert. El resto de RP-01 no depende de ello.
+- **L4** (2026-11-12): RP-01 partido en 3 commits revisables porque el candidato completo (46 ficheros / 4759 líneas, con lockfiles) excedió el presupuesto de contexto de la revisión nativa (`lens_context_budget_exceeded`). El commit de infra (`5e3bbdc`, el que contenía la señal de alto riesgo ci.yml) se revisó nativo con 2 lentes (risk + readability) y quedó **approved**; 6 hallazgos no bloqueantes anotados arriba.
