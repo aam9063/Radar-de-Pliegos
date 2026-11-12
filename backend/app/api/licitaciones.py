@@ -123,6 +123,16 @@ async def subir_documento(
     return documento
 
 
+@router.get("/licitaciones/{licitacion_id}/documentos", response_model=list[DocumentoOut])
+async def listar_documentos(licitacion_id: int, session: SessionDep) -> list[Documento]:
+    """List the documents of a licitación (frontend viewer + evidencia mapping)."""
+    await _get_licitacion_or_404(session, licitacion_id)
+    result = await session.execute(
+        select(Documento).where(Documento.licitacion_id == licitacion_id).order_by(Documento.id)
+    )
+    return list(result.scalars().all())
+
+
 async def _get_licitacion_or_404(session: AsyncSession, licitacion_id: int) -> Licitacion:
     licitacion = await session.get(Licitacion, licitacion_id)
     if licitacion is None:
