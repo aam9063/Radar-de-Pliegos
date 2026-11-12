@@ -35,7 +35,7 @@ Fuente de verdad: `BRIEF.md`. Se cita literalmente. Cada `S#` enlaza los criteri
 
 - [x] **RP-01** Esqueleto del monorepo, Docker Compose, `/health`, CI mínimo — cubre AC-01, AC-11 — route: inline — commit: `75b1a80` `483762b` `5e3bbdc`
 - [x] **RP-02** Modelos, migraciones y subida de PDFs con extracción por página — cubre AC-02 — route: worker (`gentle-ai-worker`) — commit: `bca0430` `9bb18eb`
-- [ ] **RP-03** Puerto `LLMClient`, adaptador NaN y cliente falso con límites — cubre AC-10 — route: — commit: —
+- [x] **RP-03** Puerto `LLMClient`, adaptador NaN y cliente falso con límites — cubre AC-10 — route: worker (`gentle-ai-worker`) — commit: `de0f588` `5e6c31a`
 - [ ] **RP-04** Esquema `PliegoFicha` y extracción con reintento — cubre AC-03, AC-04 — route: — commit: —
 - [ ] **RP-05** Verificación de evidencias y fusión con prioridad de fuentes — cubre AC-05, AC-07 — route: — commit: —
 - [ ] **RP-06** Perfil de empresa y motor de decisión — cubre AC-06 — route: — commit: —
@@ -55,6 +55,7 @@ Fuente de verdad: `BRIEF.md`. Se cita literalmente. Cada `S#` enlaza los criteri
 | --- | --- | --- | --- | --- | --- |
 | RP-01 | `ModuleNotFoundError: No module named 'app.main'` (test_health) | `1 passed` | backend `ruff check`/`format`/`mypy --strict` OK · `pytest` 1 passed · frontend `eslint`/`tsc --noEmit`/`vitest`/`build`/`prettier` OK · `docker compose config` OK · `docker compose build` OK | `75b1a80` `483762b` `5e3bbdc` | infra (`5e3bbdc`) high → native review **approved** |
 | RP-02 | `ModuleNotFoundError: No module named 'app.db.session'` (collection) | `10 passed` | backend `ruff check`/`format`/`mypy --strict` OK · `pytest` 10 passed (6 integración + 3 extracción + 1 health) · `alembic check` OK | `bca0430` `9bb18eb` | medium → slice close |
+| RP-03 | `ModuleNotFoundError: No module named 'app.adapters.fake_llm_client'` (collection) | `28 passed` | backend `ruff check`/`format`/`mypy --strict` OK · `pytest` 28 passed (18 nuevas + 10 previas) | `de0f588` `5e6c31a` | medium → slice close |
 
 ## Progress / Next step
 
@@ -63,7 +64,8 @@ Fuente de verdad: `BRIEF.md`. Se cita literalmente. Cada `S#` enlaza los criteri
 - [x] RP-01 cerrado: código + verificaciones + 3 commits (`75b1a80`, `483762b`, `5e3bbdc`) + RDD nativo aprobado.
 - [x] AC-01 verificado end-to-end (`docker compose up -d` → db/api/web healthy, `/health` 200). Fix mount pg18 `72779c3` + template de entorno commiteado `0ecd0b0`. Assess del fix: medium → slice close.
 - [x] RP-02 cerrado: modelos + migración + subida + extracción por página (worker `gentle-ai-worker`), 10 tests, assess medium.
-- [ ] RP-03 en curso.
+- [x] RP-03 cerrado: puerto `LLMClient` + `NanLLMClient` (semáforo 5 + backoff/jitter) + `FakeLLMClient`, 28 tests, assess medium.
+- [ ] RP-04 en curso.
 
 ### Hallazgos RDD (no bloqueantes, follow-up)
 
@@ -79,3 +81,4 @@ Fuente de verdad: `BRIEF.md`. Se cita literalmente. Cada `S#` enlaza los criteri
 - **L4** (2026-11-12): RP-01 partido en 3 commits revisables porque el candidato completo (46 ficheros / 4759 líneas, con lockfiles) excedió el presupuesto de contexto de la revisión nativa (`lens_context_budget_exceeded`). El commit de infra (`5e3bbdc`, el que contenía la señal de alto riesgo ci.yml) se revisó nativo con 2 lentes (risk + readability) y quedó **approved**; 6 hallazgos no bloqueantes anotados arriba.
 - **L5** (2026-11-12): `docker compose up -d` fallaba en `db` (Postgres 18 monta los datos en `/var/lib/postgresql`, no en `/var/lib/postgresql/data`). Fix `72779c3`. Albert creó `.env.example`; lo committeé como `0ecd0b0` (`.env.example` se versiona, solo `.env` se ignora).
 - **L6** (2026-11-12): dependencia `python-multipart` añadida — requerida por FastAPI para el endpoint de subida multipart `POST /licitaciones/{id}/documentos` (BRIEF §9, AC-02).
+- **L7** (2026-11-12): RP-03 — puerto `LLMClient` en `domain/` (puro), `NanLLMClient` y `FakeLLMClient` en `adapters/`. Fix `disable_existing_loggers=False` en `migrations/env.py`. `frontend/docs/mock/*.dc.html` (mockups de diseño ajenos) → ignorados en `.gitignore`.
