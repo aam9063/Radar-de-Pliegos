@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     database_url: str = "postgresql+asyncpg://radar:radar@db:5432/radar"
+    storage_dir: str = "storage"
     nan_api_key: str | None = None
     nan_base_url: str = "https://api.nan.builders/v1"
     extraction_model: str = "deepseek-v4-flash"
