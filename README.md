@@ -45,7 +45,7 @@ cd backend && uv run python -m evals.run
 
 Usa la API real (`NAN_API_KEY`) y compara contra los pliegos anotados en `evals/ground_truth/`. Genera el informe en `evals/results/`.
 
-**Última precisión global: pendiente** (se rellena tras la primera corrida con los 5 pliegos reales anotados).
+**Última precisión global: 51 %** (5 pliegos reales, 2026-11-12; evidencias verificadas 97,7 %). Detalle y análisis en `evals/results/`.
 
 ## Cómo funciona
 

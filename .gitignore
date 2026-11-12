@@ -18,9 +18,9 @@ playwright-report/
 test-results/
 coverage/
 
-# Eval data (not versioned)
+# Eval data
+# pliegos/ are real PDFs (large, downloaded by hand) — not versioned.
 evals/pliegos/
-evals/results/
 
 # OS
 .DS_Store
