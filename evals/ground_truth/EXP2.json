@@ -1,0 +1,41 @@
+{
+  "expediente": "EXP2",
+  "documentos": [
+    { "tipo": "PCAP", "archivo": "EXP2.pdf" }
+  ],
+  "campos": {
+    "objeto": { "valor": "Mejora de los depósitos existentes en la red de abastecimiento de Bargas (Toledo)", "nota": "título del PCAP (página 1); el pliego no consigna número de expediente" },
+    "organo_contratacion": { "valor": "Alcaldía del Ayuntamiento de Bargas", "nota": "cláusula 6: 'El órgano de contratación será la Alcaldía'" },
+    "cpv": { "valor": "32552420, 45311100, 31214500, 48921000, 45261420, 42122130, 45410000, 45442100, 45262330", "nota": "cláusula 1.1 lista 9 CPV sin sufijo de control; ninguno designado como principal" },
+    "procedimiento": "Abierto simplificado",
+    "tramitacion": "Ordinaria",
+    "presupuesto_base_sin_iva": { "valor": 123874.04, "nota": "cláusula 3.1: PBL con IVA 149.887,59 = 123.874,04 sin IVA (104.095,83 + 13.532,46 + 6.245,75)" },
+    "presupuesto_base_con_iva": 149887.59,
+    "valor_estimado": { "valor": 123874.04, "nota": "cláusula 3.2: 'El valor estimado del contrato, en el que se excluye el IVA, asciende a 123.874,04'" },
+    "revision_precios": { "valor": { "aplica": false, "formula": null }, "nota": "cláusula 3.4: 'No procede la aplicación de la institución de la revisión de precios'" },
+    "plazo_ejecucion": { "valor": { "valor": "4", "unidad": "meses" }, "nota": "cláusula 5: 'CUATRO (4) MESES'" },
+    "solvencia_economica": [
+      "Volumen anual de negocios en el ámbito al que se refiera el contrato, referido al mejor ejercicio dentro de los tres últimos disponibles, por importe igual o superior al exigido en el anuncio de licitación (art. 87.1.a LCSP)"
+    ],
+    "solvencia_tecnica": [
+      "Acreditación por cualquiera de los medios enumerados en el artículo 88 de la LCSP, en particular el apartado 1.a); para empresas de nueva creación (antigüedad inferior a cinco años), por las letras b) a f) del art. 88.1"
+    ],
+    "criterios_adjudicacion": [
+      { "nombre": "Mejor propuesta económica", "tipo": "automatico", "ponderacion": "45%" },
+      { "nombre": "Ampliación del plazo de garantía del contrato", "tipo": "automatico", "ponderacion": "30 puntos" },
+      { "nombre": "Memoria Técnica/Constructiva - Calidad de la solución técnica de impermeabilización", "tipo": "juicio_valor", "ponderacion": "8 puntos" },
+      { "nombre": "Memoria Técnica/Constructiva - Metodología en la sustitución de los equipos", "tipo": "juicio_valor", "ponderacion": "6 puntos" },
+      { "nombre": "Memoria Técnica/Constructiva - Planificación de las obras y continuidad del abastecimiento", "tipo": "juicio_valor", "ponderacion": "5 puntos" },
+      { "nombre": "Memoria Técnica/Constructiva - Control de calidad, ensayos y puesta en servicio", "tipo": "juicio_valor", "ponderacion": "6 puntos" }
+    ],
+    "penalidades": [
+      "Penalidades por incumplimiento del plazo total y de plazos parciales conforme al artículo 193 de la LCSP",
+      "Penalización no superior al 10% del precio del contrato, IVA excluido, por cumplimiento defectuoso; las penalidades por cumplimiento defectuoso no pueden superar el 50% del precio del contrato",
+      "Penalidad de hasta el 50% del importe del subcontrato por infracción de las condiciones de subcontratación",
+      "3% del presupuesto base de licitación, IVA excluido, si no se cumplimenta el requerimiento de documentación"
+    ],
+    "garantia_provisional": { "valor": "No se exige", "nota": "cláusula 9.1: 'No se exige la constitución de garantía provisional'" },
+    "garantia_definitiva": "5% del precio ofertado por el licitador",
+    "subcontratacion_limites": "Se permite en el porcentaje y con los requisitos del artículo 215 de la LCSP; sin límite porcentual específico en el pliego"
+  }
+}

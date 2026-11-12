@@ -1,0 +1,42 @@
+{
+  "expediente": "4586/2026",
+  "documentos": [
+    { "tipo": "PCAP", "archivo": "EXP1.pdf" }
+  ],
+  "campos": {
+    "expediente": "4586/2026",
+    "objeto": { "valor": "Rehabilitación de firmes en varias vías del Ayuntamiento de Barbadás", "nota": "título del PCAP (página 1); dos lotes: pavimentación rúa dos Ponxos (A Valenzá) y camiño da Chaira (Piñor)" },
+    "organo_contratacion": "Ayuntamiento de Barbadás",
+    "cpv": "45233222-1",
+    "procedimiento": "Abierto simplificado",
+    "presupuesto_base_sin_iva": { "valor": 165289.26, "nota": "página 4, cuadro desglosado por lote" },
+    "presupuesto_base_con_iva": { "valor": 200000.0, "nota": "página 4: 'presupuesto base de licitación es de 200.000€ (I.V.A incluido)'" },
+    "valor_estimado": 165289.26,
+    "revision_precios": { "valor": { "aplica": false, "formula": null }, "nota": "cláusula sexta: 'No cabe la revisión de precios'" },
+    "plazo_ejecucion": { "valor": { "valor": "4 semanas (lote rúa dos Ponxos) / 3 meses (lote camiño da Chaira)", "unidad": null }, "nota": "cláusula séptima: plazos distintos por lote (página 5)" },
+    "solvencia_economica": [
+      "Volumen anual de negocios, referido al año de mayor volumen de los tres últimos, igual o superior a una vez y media el valor estimado del contrato"
+    ],
+    "solvencia_tecnica": [
+      "Relación de obras ejecutadas en los últimos 10 años correspondientes al mismo grupo o subgrupo de clasificación del contrato, con importe anual acumulado sin impuestos en el año de mayor ejecución igual o superior al 70% del valor estimado del contrato (coincidencia de los dos primeros dígitos del CPV)"
+    ],
+    "criterios_adjudicacion": [
+      { "nombre": "Precio ofertado", "tipo": "automatico", "ponderacion": "50 puntos" },
+      { "nombre": "Ampliación del plazo de garantía", "tipo": "automatico", "ponderacion": "15 puntos" },
+      { "nombre": "Disminución del plazo de ejecución", "tipo": "automatico", "ponderacion": "10 puntos" },
+      { "nombre": "Descripción de medidas de seguridad y salud", "tipo": "juicio_valor", "ponderacion": "4 puntos" },
+      { "nombre": "Descripción de equipos humanos", "tipo": "juicio_valor", "ponderacion": "4 puntos" },
+      { "nombre": "Programación de los trabajos", "tipo": "juicio_valor", "ponderacion": "12 puntos" },
+      { "nombre": "Medio ambiente", "tipo": "juicio_valor", "ponderacion": "5 puntos" }
+    ],
+    "penalidades": [
+      "Penalidades diarias por demora de 0,60 euros por cada 1.000 euros del precio del contrato, IVA excluido",
+      "3% del presupuesto base de licitación, IVA excluido, si no se formaliza el contrato por causas imputables al adjudicatario",
+      "Penalidades coercitivas del 10% por cada infracción y/o día de incumplimiento",
+      "5% del importe subcontratado por incumplimiento en materia de subcontratación",
+      "Multa coercitiva entre el 5% y el 10% del importe de adjudicación (IVA excluido) por incumplimiento o cumplimiento defectuoso"
+    ],
+    "garantia_definitiva": "5% del precio final ofertado, excluido el Impuesto sobre el Valor Añadido (de forma individual para cada lote)",
+    "subcontratacion_limites": "Se autoriza la subcontratación parcial de las prestaciones accesorias conforme al artículo 215 de la LCSP; sin límite porcentual específico"
+  }
+}
