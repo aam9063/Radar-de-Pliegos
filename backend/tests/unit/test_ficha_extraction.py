@@ -58,6 +58,15 @@ def test_build_prompt_includes_the_json_schema() -> None:
     assert "PliegoFicha" in prompt
 
 
+def test_build_prompt_solvencia_vs_clasificacion_rule() -> None:
+    """MP-03 (S5): pin the solvencia-vs-clasificacion rule."""
+    prompt = build_prompt([_page("PCAP", 1, "texto")])
+    normalized = " ".join(prompt.split())
+
+    assert '"solvencia_economica" y "solvencia_tecnica" van con "valor": null' in normalized
+    assert 'se extrae SOLO en "clasificacion_exigida"' in normalized
+
+
 def _valid_answer() -> dict[str, object]:
     return {
         "expediente": {"valor": "CN-2026/01", "confianza": "alta"},
