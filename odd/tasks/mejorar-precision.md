@@ -10,8 +10,9 @@
 
 ## Tasks
 
-- [ ] **MP-01** Normalización determinista en la comparación + fallback de subcontratación + re-evaluación — cubre S1, S2, S3 — route: worker — commit: —
+- [x] **MP-01** Normalización determinista en la comparación + fallback de subcontratación + re-evaluación — cubre S1, S2, S3 — route: worker — commit: `7148145`
 
 ## Log
 
 - **L1** (2026-11-12, Albert): "continúa" tras cerrar Fase 1/Fase 2 y establecer el nuevo flujo git (push/PR/merge a dev). Feature propuesta por el agente a partir del análisis del eval.
+- **L2** (2026-11-12): MP-01 cerrado — normalización format-only (12 reglas documentadas) + fallback determinista de subcontratación. Precisión real: **51 % → 65 %** (63-65 % entre corridas, varianza LLM). `criterios` 0→40 %, `procedimiento` 20→80 %, `tramitación` 60→100 %, `plazo` 40→80 %, `garantía provisional` 60→100 %. Pendiente de Albert: `subcontratacion_limites` y `penalidades` siguen al 0 % (ground truth frases interpretativas vs fallback honesto).
