@@ -62,7 +62,7 @@ Fuente de verdad: `BRIEF.md`. Se cita literalmente. Cada `S#` enlaza los criteri
 | RP-07 | backend `assert 404 == 200` (PDF endpoint) / frontend `Failed to resolve import ../../lib/api` | backend `109 passed` · frontend `vitest 5` + `playwright 3` | backend `ruff`/`mypy` OK · frontend `eslint`/`tsc`/`vitest`/`build` OK · e2e OK | `96b09d6` `f00e2ea` | medium → slice close |
 | RP-08 | `ModuleNotFoundError: No module named 'evals.comparacion'` (collection) | `153 passed` | backend `ruff`/`format`/`mypy --strict` OK · `pytest` 153 passed (44 nuevas + 109 previas) · `python -m evals.run` exit 1 (sin NAN_API_KEY, esperado) | `65447e8` | medium → slice close |
 | RP-09 | n/a (docs) | n/a | README creado; arranque verificado en RP-01 (`docker compose up -d` → `/health` 200) | `180959b` | slice-close 4R (abajo) |
-| RP-10 | `ModuleNotFoundError: No module named 'app.domain.planificacion'` (collection) | `186 passed` | backend `ruff`/`format`/`mypy --strict` OK · `pytest` 186 passed (33 nuevas) · frontend `eslint`/`tsc`/`vitest 10`/`build` OK | `4d0e045` `073b27f` | medium → slice close |
+| RP-10 | `ModuleNotFoundError: No module named 'app.domain.planificacion'` (collection) | `186 passed` | backend `ruff`/`format`/`mypy --strict` OK · `pytest` 186 passed (33 nuevas) · frontend `eslint`/`tsc`/`vitest 10`/`build` OK | `4d0e045` `073b27f` | native review **approved** (reliability + resilience) |
 
 ## Progress / Next step
 
@@ -127,3 +127,4 @@ RDD: commit de infra revisado nativo (**approved**); resto de work-units con ass
 - **L14** (2026-11-12): RP-09 — README (`180959b`) + slice review 4R + borrador de PR. Fase 1 cerrada.
 - **L15** (2026-11-12): dependencia `networkx` promovida a directa — requerida para el CPM del planificador (BRIEF §9, AC-13).
 - **L16** (2026-11-12): RP-10 — `calcular_cpm` puro en `domain/planificacion.py` (pase adelante/atrás, holgura, ruta crítica determinista), propuesta de actividades desde el PPT con reintento único, endpoints `GET /licitaciones/{id}/planificacion[.csv]`, Gantt con ruta crítica + export CSV. AC-13 (caso resuelto a mano) verde. Follow-up: `# type: ignore[import-untyped]` en networkx (sin py.typed) → añadir `types-networkx` si se quiere limpiar.
+- **L17** (2026-11-12): RP-10 revisado nativo (2 lentes: reliability + resilience) → **approved**. 4 hallazgos no bloqueantes (follow-up): `R3-determinism-boundary` (planificacion.py:107-123, sugerencia), `R4-001` (planificacion_extraction.py:89), `R4-002` (api/planificacion.py:103), `R4-003` (PlanificacionGantt.tsx:93).
