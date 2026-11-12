@@ -12,7 +12,7 @@
 ## Tasks
 
 - [x] **MP-01** Normalización determinista en la comparación + fallback de subcontratación + re-evaluación — cubre S1, S2, S3 — route: worker — commit: `7148145`
-- [x] **MP-02** Canonicalizar ground truth de subcontratación y penalidades + normalización de hecho central — cubre S4 — route: worker — commit: `(pendiente)`
+- [x] **MP-02** Canonicalizar ground truth de subcontratación y penalidades + normalización de hecho central — cubre S4 — route: worker — commit: `0b48732`
 
 ## Log
 
