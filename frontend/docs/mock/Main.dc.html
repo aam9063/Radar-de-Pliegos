@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Radar de Pliegos · Licitaciones</title>
+<script src="./vendor/react.js"></script>
+<script src="./vendor/react-dom.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#2445C8}a:hover{color:#1A3396}
+</style>
+</helmet>
+<div style="min-height: 900px; background: #F6F6F3; color: #17181C; font-family: Inter, system-ui, sans-serif; font-size: 15px">
+  <header style="background: #FFFFFF; border-bottom: 1px solid #E3E3DE">
+    <div style="max-width: 1280px; margin: 0 auto; padding: 14px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 24px">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2445C8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="5"></circle><path d="M12 12l6-6"></path></svg>
+        <span style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 20px">Radar de Pliegos</span>
+      </div>
+      <nav aria-label="Principal" style="display: flex; gap: 4px; flex-wrap: wrap">
+        <a href="Main.dc.html" style="padding: 10px 14px; border-radius: 8px; background: #EEF1FC; color: #2445C8; font-weight: 600; text-decoration: none">Licitaciones</a>
+        <a href="#perfil" style="padding: 10px 14px; border-radius: 8px; color: #3D4048; text-decoration: none">Perfil de empresa</a>
+      </nav>
+      <div style="margin-left: auto; display: flex; align-items: center; gap: 8px; color: #5B5E66; font-size: 13px">
+        <span style="width: 8px; height: 8px; border-radius: 4px; background: #1E7A46" aria-hidden="true"></span>
+        Modelo: deepseek-v4-flash · NaN Builders
+      </div>
+    </div>
+  </header>
+
+  <main style="max-width: 1280px; margin: 0 auto; padding: 32px 24px 48px; display: flex; flex-direction: column; gap: 24px">
+    <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 32px; font-weight: 700">Licitaciones</h1>
+        <p style="margin: 0; color: #5B5E66">Sube los pliegos, revisa la ficha y decide si presentarte.</p>
+      </div>
+      <a href="RadarNueva.dc.html" style="margin-left: auto; display: inline-flex; align-items: center; gap: 8px; padding: 12px 18px; min-height: 44px; box-sizing: border-box; border-radius: 10px; background: #2445C8; color: #FFFFFF; font-weight: 600; text-decoration: none">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+        Nueva licitación
+      </a>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px">
+      <div style="background: #FFFFFF; border: 1px solid #E3E3DE; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 4px">
+        <span style="color: #5B5E66; font-size: 13px">Analizadas</span>
+        <span style="font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 600">{{counts.total}}</span>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #E3E3DE; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 4px">
+        <span style="color: #5B5E66; font-size: 13px">GO</span>
+        <span style="font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 600; color: #1E7A46">{{counts.go}}</span>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #E3E3DE; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 4px">
+        <span style="color: #5B5E66; font-size: 13px">Revisar</span>
+        <span style="font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 600; color: #8A5A00">{{counts.revisar}}</span>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #E3E3DE; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 4px">
+        <span style="color: #5B5E66; font-size: 13px">NO-GO</span>
+        <span style="font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 600; color: #B42318">{{counts.nogo}}</span>
+      </div>
+    </div>
+
+    <section aria-label="Listado de licitaciones" style="background: #FFFFFF; border: 1px solid #E3E3DE; border-radius: 12px; overflow: hidden">
+      <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 14px 16px; border-bottom: 1px solid #E3E3DE">
+        <label for="buscar" style="position: absolute; left: -9999px">Buscar licitación</label>
+        <input id="buscar" type="search" placeholder="Buscar por objeto, expediente u órgano" style="flex: 1 1 280px; min-height: 44px; box-sizing: border-box; padding: 0 14px; border: 1px solid #D4D4CE; border-radius: 8px; font: inherit">
+        <label for="filtro" style="color: #5B5E66; font-size: 13px">Recomendación</label>
+        <select id="filtro" style="min-height: 44px; padding: 0 12px; border: 1px solid #D4D4CE; border-radius: 8px; font: inherit; background: #FFFFFF">
+          <option>Todas</option><option>GO</option><option>Revisar</option><option>NO-GO</option>
+        </select>
+      </div>
+      <div style="overflow-x: auto">
+        <table style="width: 100%; min-width: 900px; border-collapse: collapse; text-align: left">
+          <thead>
+            <tr style="color: #5B5E66; font-size: 13px">
+              <th scope="col" style="padding: 12px 16px; font-weight: 500">Licitación</th>
+              <th scope="col" style="padding: 12px 16px; font-weight: 500">Órgano de contratación</th>
+              <th scope="col" style="padding: 12px 16px; font-weight: 500; text-align: right">Presupuesto base</th>
+              <th scope="col" style="padding: 12px 16px; font-weight: 500">Fecha límite</th>
+              <th scope="col" style="padding: 12px 16px; font-weight: 500">Estado</th>
+              <th scope="col" style="padding: 12px 16px; font-weight: 500">Recomendación</th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{rows}}" as="row" hint-placeholder-count="5">
+              <tr style="border-top: 1px solid #EDEDE8">
+                <td style="padding: 14px 16px">
+                  <a href="RadarDetalle.dc.html" style="font-weight: 600; text-decoration: none">{{row.objeto}}</a>
+                  <div style="color: #5B5E66; font-size: 13px; margin-top: 2px">{{row.expediente}} · {{row.docs}}</div>
+                </td>
+                <td style="padding: 14px 16px; color: #3D4048">{{row.organo}}</td>
+                <td style="padding: 14px 16px; text-align: right; font-variant-numeric: tabular-nums">{{row.presupuesto}}</td>
+                <td style="padding: 14px 16px; font-variant-numeric: tabular-nums">{{row.fecha}}</td>
+                <td style="padding: 14px 16px; color: #3D4048">{{row.estado}}</td>
+                <td style="padding: 14px 16px">
+                  <span style="{{row.badgeStyle}}">{{row.decision}}</span>
+                </td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <p style="margin: 0; color: #5B5E66; font-size: 13px">Datos de ejemplo. Los pliegos se descargan a mano de la Plataforma de Contratación del Sector Público.</p>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var base = 'display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:13px;font-weight:600;';
+    var styles = {
+      GO: base + 'background:#E6F4EC;color:#1E7A46',
+      REVISAR: base + 'background:#FFF4D6;color:#8A5A00',
+      'NO-GO': base + 'background:#FDECEA;color:#B42318',
+      '': base + 'background:#EDEDE8;color:#5B5E66'
+    };
+    var rows = [
+      { objeto: 'Rehabilitación de edificio municipal de usos múltiples', expediente: 'EXP-2026/0142', docs: '3 PDF', organo: 'Ayuntamiento [ejemplo]', presupuesto: '1.284.000 €', fecha: '28 nov 2026', estado: 'Lista', decision: 'REVISAR' },
+      { objeto: 'Urbanización de calle y red de saneamiento', expediente: 'EXP-2026/0098', docs: '4 PDF', organo: 'Diputación [ejemplo]', presupuesto: '640.500 €', fecha: '2 dic 2026', estado: 'Lista', decision: 'GO' },
+      { objeto: 'Construcción de pabellón polideportivo', expediente: 'EXP-2026/0311', docs: '5 PDF', organo: 'Ayuntamiento [ejemplo]', presupuesto: '3.950.000 €', fecha: '20 nov 2026', estado: 'Lista', decision: 'NO-GO' },
+      { objeto: 'Reforma de centro educativo', expediente: 'EXP-2026/0207', docs: '2 PDF', organo: 'Consejería [ejemplo]', presupuesto: '415.000 €', fecha: '9 dic 2026', estado: 'Procesando', decision: '' },
+      { objeto: 'Mejora de accesibilidad en vía pública', expediente: 'EXP-2026/0189', docs: '3 PDF', organo: 'Ayuntamiento [ejemplo]', presupuesto: '212.300 €', fecha: '1 dic 2026', estado: 'Lista', decision: 'GO' }
+    ].map(function (r) {
+      return Object.assign({}, r, { badgeStyle: styles[r.decision], decision: r.decision || 'Pendiente' });
+    });
+    return {
+      rows: rows,
+      counts: { total: 5, go: 2, revisar: 1, nogo: 1 }
+    };
+  }
+}
+</script>
+</body>
+</html>

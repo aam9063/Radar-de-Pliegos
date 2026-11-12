@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Radar de Pliegos · Ficha y decisión</title>
+<script src="./vendor/react.js"></script>
+<script src="./vendor/react-dom.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#2445C8}a:hover{color:#1A3396}
+</style>
+</helmet>
+<div style="min-height: 1180px; background: #F6F6F3; color: #17181C; font-family: Inter, system-ui, sans-serif; font-size: 15px">
+  <header style="background: #FFFFFF; border-bottom: 1px solid #E3E3DE">
+    <div style="max-width: 1360px; margin: 0 auto; padding: 14px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 24px">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2445C8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="5"></circle><path d="M12 12l6-6"></path></svg>
+        <span style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 20px">Radar de Pliegos</span>
+      </div>
+      <nav aria-label="Principal" style="display: flex; gap: 4px; flex-wrap: wrap">
+        <a href="Main.dc.html" style="padding: 10px 14px; border-radius: 8px; background: #EEF1FC; color: #2445C8; font-weight: 600; text-decoration: none">Licitaciones</a>
+        <a href="#perfil" style="padding: 10px 14px; border-radius: 8px; color: #3D4048; text-decoration: none">Perfil de empresa</a>
+      </nav>
+    </div>
+  </header>
+
+  <main style="max-width: 1360px; margin: 0 auto; padding: 24px 24px 48px; display: flex; flex-direction: column; gap: 20px">
+    <div style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px">
+      <div style="flex: 1 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+        <a href="Main.dc.html" style="font-size: 14px; text-decoration: none">← Licitaciones</a>
+        <h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 700; line-height: 1.2">Rehabilitación de edificio municipal de usos múltiples</h1>
+        <p style="margin: 0; color: #5B5E66">EXP-2026/0142 · Ayuntamiento [ejemplo] · 3 documentos · extraído hace 2 min</p>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap">
+        <button type="button" style="min-height: 44px; padding: 0 16px; border: 1px solid #D4D4CE; border-radius: 10px; background: #FFFFFF; font: inherit; font-weight: 500; cursor: pointer">Volver a extraer</button>
+        <button type="button" style="min-height: 44px; padding: 0 16px; border: 0; border-radius: 10px; background: #2445C8; color: #FFFFFF; font: inherit; font-weight: 600; cursor: pointer">Exportar ficha</button>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+      <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+
+        <section aria-label="Recomendación" style="background: #FFFFFF; border: 1px solid #E3E3DE; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+            <span style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; background: #FFF4D6; color: #8A5A00; font-weight: 700; font-size: 15px">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01"></path><circle cx="12" cy="12" r="9"></circle></svg>
+              REVISAR
+            </span>
+            <span style="color: #5B5E66; font-size: 14px">Decidido por reglas contra tu perfil. El texto lo redacta la IA.</span>
+          </div>
+          <p style="margin: 0; line-height: 1.55">Cumples la clasificación y la solvencia económica, y hay margen de plazo. Queda una duda: las penalidades por demora no se han podido verificar en el PCAP. Comprueba la página citada antes de decidir.</p>
+          <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px">
+            <sc-for list="{{reasons}}" as="r" hint-placeholder-count="4">
+              <li style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; background: #FAFAF8">
+                <span style="{{r.iconStyle}}" aria-hidden="true">{{r.icon}}</span>
+                <span style="flex: 1 1 280px">{{r.text}}</span>
+                <button type="button" onClick="{{r.pick}}" style="min-height: 36px; padding: 0 12px; border: 1px solid #D4D4CE; border-radius: 8px; background: #FFFFFF; font: inherit; font-size: 13px; color: #2445C8; cursor: pointer">{{r.ref}}</button>
+              </li>
+            </sc-for>
+          </ul>
+        </section>
+
+        <section aria-label="Ficha extraída" style="background: #FFFFFF; border: 1px solid #E3E3DE; border-radius: 12px; overflow: hidden">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid #E3E3DE">
+            <h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 600">Ficha</h2>
+            <span style="color: #5B5E66; font-size: 13px">16 campos · 13 verificados · 1 sin verificar · 2 no encontrados</span>
+          </div>
+          <sc-for list="{{groups}}" as="g" hint-placeholder-count="4">
+            <div style="padding: 8px 20px 12px; border-bottom: 1px solid #EDEDE8">
+              <h3 style="margin: 12px 0 6px; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: #5B5E66">{{g.titulo}}</h3>
+              <sc-for list="{{g.fields}}" as="f" hint-placeholder-count="3">
+                <div style="{{f.rowStyle}}">
+                  <span style="flex: 0 0 200px; color: #5B5E66; font-size: 14px">{{f.label}}</span>
+                  <span style="{{f.valueStyle}}">{{f.valor}}</span>
+                  <sc-if value="{{f.hasEvidence}}" hint-placeholder-val="{{ true }}">
+                    <button type="button" onClick="{{f.pick}}" aria-label="{{f.aria}}" style="{{f.chipStyle}}">
+                      <span aria-hidden="true">{{f.mark}}</span>
+                      {{f.ref}}
+                    </button>
+                  </sc-if>
+                  <sc-if value="{{f.missing}}" hint-placeholder-val="{{ false }}">
+                    <span style="font-size: 13px; color: #5B5E66; padding: 6px 10px; border: 1px dashed #C9C9C2; border-radius: 8px">No aparece</span>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+        </section>
+      </div>
+
+      <aside aria-label="Visor de documento" style="flex: 1 1 440px; min-width: 0; background: #FFFFFF; border: 1px solid #E3E3DE; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column">
+        <div style="display: flex; flex-wrap: wrap; gap: 4px; padding: 10px; border-bottom: 1px solid #E3E3DE; background: #FAFAF8">
+          <sc-for list="{{docs}}" as="d" hint-placeholder-count="3">
+            <span style="{{d.tabStyle}}">{{d.name}}</span>
+          </sc-for>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid #EDEDE8; font-size: 14px">
+          <button type="button" aria-label="Página anterior" style="width: 36px; height: 36px; border: 1px solid #D4D4CE; border-radius: 8px; background: #FFFFFF; cursor: pointer">‹</button>
+          <span style="font-variant-numeric: tabular-nums">Página <strong>{{sel.page}}</strong> de {{sel.total}}</span>
+          <button type="button" aria-label="Página siguiente" style="width: 36px; height: 36px; border: 1px solid #D4D4CE; border-radius: 8px; background: #FFFFFF; cursor: pointer">›</button>
+          <span style="{{sel.statusStyle}}">{{sel.status}}</span>
+        </div>
+        <div style="background: #E9E9E4; padding: 24px; display: flex; justify-content: center">
+          <div style="width: 100%; max-width: 420px; background: #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,0.12); padding: 32px 28px; display: flex; flex-direction: column; gap: 10px; font-family: Georgia, serif; font-size: 12px; line-height: 1.6; color: #2A2A2A">
+            <div style="font-size: 11px; color: #5B5E66; font-family: Inter, sans-serif">{{sel.doc}} · {{sel.section}}</div>
+            <div style="height: 8px; background: #E4E4DF; border-radius: 2px; width: 92%"></div>
+            <div style="height: 8px; background: #E4E4DF; border-radius: 2px; width: 100%"></div>
+            <div style="height: 8px; background: #E4E4DF; border-radius: 2px; width: 84%"></div>
+            <p style="{{sel.quoteStyle}}">{{sel.quote}}</p>
+            <div style="height: 8px; background: #E4E4DF; border-radius: 2px; width: 96%"></div>
+            <div style="height: 8px; background: #E4E4DF; border-radius: 2px; width: 100%"></div>
+            <div style="height: 8px; background: #E4E4DF; border-radius: 2px; width: 70%"></div>
+            <div style="height: 8px; background: #E4E4DF; border-radius: 2px; width: 88%"></div>
+            <div style="height: 8px; background: #E4E4DF; border-radius: 2px; width: 100%"></div>
+            <div style="height: 8px; background: #E4E4DF; border-radius: 2px; width: 60%"></div>
+          </div>
+        </div>
+        <div style="padding: 14px 16px; font-size: 13px; color: #5B5E66; line-height: 1.5">Pulsa una referencia de la ficha o de la recomendación para saltar a su página. La cita resaltada es la que el código ha comprobado.</div>
+      </aside>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1180}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sel: 'presupuesto' };
+  }
+  renderVals() {
+    var self = this;
+    var ev = {
+      presupuesto: { doc: 'PCAP', total: 64, page: 7, section: 'Cláusula 4 · Presupuesto', quote: 'El presupuesto base de licitación asciende a 1.284.000,00 euros, IVA excluido.', ok: true },
+      valor: { doc: 'PCAP', total: 64, page: 7, section: 'Cláusula 4 · Valor estimado', quote: 'El valor estimado del contrato es de 1.284.000,00 euros.', ok: true },
+      plazo: { doc: 'PCAP', total: 64, page: 9, section: 'Cláusula 6 · Plazo', quote: 'El plazo de ejecución de las obras será de diez meses.', ok: true },
+      fecha: { doc: 'ANEXO', total: 12, page: 1, section: 'Anuncio', quote: 'Fecha límite de presentación de ofertas: 28 de noviembre de 2026, 14:00 h.', ok: true },
+      clasif: { doc: 'PCAP', total: 64, page: 14, section: 'Cláusula 11 · Solvencia', quote: 'Grupo C, subgrupo 2, categoría 4.', ok: true },
+      solv: { doc: 'PCAP', total: 64, page: 15, section: 'Cláusula 11 · Solvencia económica', quote: 'Volumen anual de negocios igual o superior a 1,5 veces el valor estimado.', ok: true },
+      criterios: { doc: 'PCAP', total: 64, page: 22, section: 'Cláusula 17 · Criterios', quote: 'Oferta económica: hasta 60 puntos. Memoria técnica: hasta 40 puntos.', ok: true },
+      penal: { doc: 'PCAP', total: 64, page: 38, section: 'Cláusula 29 · Penalidades', quote: '[La cita extraída no coincide con el texto de esta página]', ok: false },
+      garantia: { doc: 'PCAP', total: 64, page: 18, section: 'Cláusula 13 · Garantías', quote: 'Garantía definitiva del 5 % del precio final ofertado, IVA excluido.', ok: true }
+    };
+    var pickFn = function (key) { return function () { self.setState({ sel: key }); }; };
+    var sel = ev[this.state.sel] || ev.presupuesto;
+    var chipBase = 'display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 10px;border-radius:8px;font:inherit;font-size:13px;cursor:pointer;';
+    var mkField = function (label, valor, key, missing) {
+      var e = key ? ev[key] : null;
+      var active = key && self.state.sel === key;
+      return {
+        label: label,
+        valor: missing ? 'Sin dato' : valor,
+        hasEvidence: !!e,
+        missing: !!missing,
+        ref: e ? e.doc + ' · p. ' + e.page : '',
+        aria: e ? 'Ver ' + label + ' en ' + e.doc + ' página ' + e.page : '',
+        mark: e && e.ok ? '✓' : '!',
+        pick: key ? pickFn(key) : null,
+        chipStyle: chipBase + (e && e.ok ? 'border:1px solid #C9D8CE;background:#F1F8F3;color:#1E7A46;' : 'border:1px solid #F0D48A;background:#FFF4D6;color:#8A5A00;') + (active ? 'outline:2px solid #2445C8;outline-offset:1px;' : ''),
+        rowStyle: 'display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:8px 10px;margin:0 -10px;border-radius:8px;' + (active ? 'background:#EEF1FC;' : ''),
+        valueStyle: 'flex:1 1 200px;min-width:0;font-weight:500;' + (missing ? 'color:#5B5E66;' : '')
+      };
+    };
+    var groups = [
+      { titulo: 'Económicos', fields: [
+        mkField('Presupuesto base (sin IVA)', '1.284.000,00 €', 'presupuesto'),
+        mkField('Valor estimado', '1.284.000,00 €', 'valor'),
+        mkField('Revisión de precios', '', null, true)
+      ] },
+      { titulo: 'Plazos', fields: [
+        mkField('Plazo de ejecución', '10 meses', 'plazo'),
+        mkField('Fecha límite de ofertas', '28 nov 2026 · 14:00 (17 días)', 'fecha')
+      ] },
+      { titulo: 'Requisitos', fields: [
+        mkField('Clasificación exigida', 'C-2-4 (edificación, estructuras de fábrica)', 'clasif'),
+        mkField('Solvencia económica', '≥ 1.926.000 € de volumen anual', 'solv')
+      ] },
+      { titulo: 'Adjudicación y riesgos', fields: [
+        mkField('Criterios', 'Precio 60 · Memoria técnica 40 (juicio de valor)', 'criterios'),
+        mkField('Penalidades por demora', 'Según art. 193 LCSP (sin verificar)', 'penal'),
+        mkField('Garantía definitiva', '5 % del precio ofertado', 'garantia'),
+        mkField('Límites de subcontratación', '', null, true)
+      ] }
+    ];
+    var iconBase = 'display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:12px;font-size:13px;font-weight:700;';
+    var okIcon = iconBase + 'background:#E6F4EC;color:#1E7A46';
+    var warnIcon = iconBase + 'background:#FFF4D6;color:#8A5A00';
+    var reasons = [
+      { icon: '!', iconStyle: warnIcon, text: 'Penalidades: la cita extraída no se encuentra en la página indicada.', ref: 'PCAP · p. 38', pick: pickFn('penal') },
+      { icon: '✓', iconStyle: okIcon, text: 'Clasificación C-2-4 exigida: tu empresa la tiene.', ref: 'PCAP · p. 14', pick: pickFn('clasif') },
+      { icon: '✓', iconStyle: okIcon, text: 'Solvencia económica exigida (1,93 M€) por debajo de tu volumen anual.', ref: 'PCAP · p. 15', pick: pickFn('solv') },
+      { icon: '✓', iconStyle: okIcon, text: 'Quedan 17 días para presentar; tu mínimo son 15.', ref: 'ANEXO · p. 1', pick: pickFn('fecha') }
+    ];
+    var tabBase = 'padding:8px 12px;border-radius:8px;font-size:13px;font-weight:600;';
+    var docs = ['PCAP', 'PPT', 'ANEXO'].map(function (n) {
+      return { name: n, tabStyle: tabBase + (n === sel.doc ? 'background:#FFFFFF;color:#2445C8;box-shadow:0 0 0 1px #D4D4CE;' : 'color:#5B5E66;') };
+    });
+    return {
+      groups: groups,
+      reasons: reasons,
+      docs: docs,
+      sel: {
+        doc: sel.doc,
+        page: sel.page,
+        total: sel.total,
+        section: sel.section,
+        quote: sel.quote,
+        status: sel.ok ? '✓ Cita verificada' : '! Sin verificar',
+        statusStyle: 'margin-left:auto;font-size:13px;font-weight:600;' + (sel.ok ? 'color:#1E7A46' : 'color:#8A5A00'),
+        quoteStyle: 'margin:4px 0;padding:6px 8px;border-radius:4px;' + (sel.ok ? 'background:#FFF1A8;' : 'background:#FDECEA;color:#7A1A12;font-family:Inter,sans-serif;')
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

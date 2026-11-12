@@ -18,9 +18,6 @@ playwright-report/
 test-results/
 coverage/
 
-# Design scratch
-frontend/docs/mock/
-
 # OS
 .DS_Store
 Thumbs.db
