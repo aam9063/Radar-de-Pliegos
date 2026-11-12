@@ -38,7 +38,7 @@ Fuente de verdad: `BRIEF.md`. Se cita literalmente. Cada `S#` enlaza los criteri
 - [x] **RP-03** Puerto `LLMClient`, adaptador NaN y cliente falso con límites — cubre AC-10 — route: worker (`gentle-ai-worker`) — commit: `de0f588` `5e6c31a`
 - [x] **RP-04** Esquema `PliegoFicha` y extracción con reintento — cubre AC-03, AC-04 — route: worker (`gentle-ai-worker`) — commit: `6f0cec4`
 - [x] **RP-05** Verificación de evidencias y fusión con prioridad de fuentes — cubre AC-05, AC-07 — route: worker (`gentle-ai-worker`) — commit: `e81ade1`
-- [ ] **RP-06** Perfil de empresa y motor de decisión — cubre AC-06 — route: — commit: —
+- [x] **RP-06** Perfil de empresa y motor de decisión — cubre AC-06 — route: worker (`gentle-ai-worker`) — commit: `4790acc`
 - [ ] **RP-07** Frontend: lista, subida, ficha + visor, decisión, perfil — cubre AC-09 — route: — commit: —
 - [ ] **RP-08** Evaluación con 5 pliegos e informe — cubre AC-08 — route: — commit: —
 - [ ] **RP-09** README y cierre de la Fase 1 — cubre AC-12 — route: — commit: —
@@ -58,6 +58,7 @@ Fuente de verdad: `BRIEF.md`. Se cita literalmente. Cada `S#` enlaza los criteri
 | RP-03 | `ModuleNotFoundError: No module named 'app.adapters.fake_llm_client'` (collection) | `28 passed` | backend `ruff check`/`format`/`mypy --strict` OK · `pytest` 28 passed (18 nuevas + 10 previas) | `de0f588` `5e6c31a` | medium → slice close |
 | RP-04 | `ModuleNotFoundError: No module named 'app.domain.pliego_ficha'` (collection) | `51 passed` | backend `ruff check`/`format`/`mypy --strict` OK · `pytest` 51 passed (23 nuevas + 28 previas) · `alembic check` OK | `6f0cec4` | medium → slice close |
 | RP-05 | `ModuleNotFoundError: No module named 'app.domain.fusion_ficha'` (collection) | `73 passed` | backend `ruff check`/`format`/`mypy --strict` OK · `pytest` 73 passed (22 nuevas + 51 previas) | `e81ade1` | medium → slice close |
+| RP-06 | `ModuleNotFoundError: No module named 'app.domain.motor_decision'` (collection) | `103 passed` | backend `ruff check`/`format`/`mypy --strict` OK · `pytest` 103 passed (30 nuevas + 73 previas) · `alembic check` OK | `4790acc` | medium → slice close |
 
 ## Progress / Next step
 
@@ -69,7 +70,8 @@ Fuente de verdad: `BRIEF.md`. Se cita literalmente. Cada `S#` enlaza los criteri
 - [x] RP-03 cerrado: puerto `LLMClient` + `NanLLMClient` (semáforo 5 + backoff/jitter) + `FakeLLMClient`, 28 tests, assess medium.
 - [x] RP-04 cerrado: `PliegoFicha` (20 campos `CampoExtraido[T]`) + extractor con marcadores y reintento único + modelo `ficha`, 51 tests, assess medium.
 - [x] RP-05 cerrado: extracción por documento + fusión determinista (prioridad PCAP>ANEXO>PPT>OTRO + avisos de conflicto) + verificación fuzzy de citas (≥0,9 → `verificado`), 73 tests, assess medium.
-- [ ] RP-06 en curso.
+- [x] RP-06 cerrado: perfil de empresa + motor de decisión puro (6 reglas, NO-GO>REVISAR, razones con evidencia) + resumen LLM, 103 tests, assess medium.
+- [ ] RP-07 en curso.
 
 ### Hallazgos RDD (no bloqueantes, follow-up)
 
@@ -88,3 +90,4 @@ Fuente de verdad: `BRIEF.md`. Se cita literalmente. Cada `S#` enlaza los criteri
 - **L7** (2026-11-12): RP-03 — puerto `LLMClient` en `domain/` (puro), `NanLLMClient` y `FakeLLMClient` en `adapters/`. Fix `disable_existing_loggers=False` en `migrations/env.py`. `frontend/docs/mock/*.dc.html` (mockups de diseño ajenos) → ignorados en `.gitignore`.
 - **L8** (2026-11-12): RP-04 — esquema `PliegoFicha` (20 campos, `CampoExtraido[T]` genérico con regla de oro: no aparece → `None` sin evidencia), extractor single-call con marcadores `[[DOC:<tipo>|P:<n>]]` + reintento único → 502. Pendiente para RP-05: refactor a extracción **por documento** + fusión determinista (AC-07 exige conflictos PCAP>PPT) + verificación de citas. Dependencia `rapidfuzz` para fuzzy ≥0,9 (AC-05).
 - **L9** (2026-11-12): RP-05 — refactor a extracción por documento, `fusion_ficha.py` (prioridad + avisos), `verificacion_ficha.py` (normalización + `partial_ratio/100 ≥ 0,9` → `verificado`), `CampoExtraido.verificado`. Umbral fuzzy correcto: `partial_ratio` es 0-100, se divide por 100.
+- **L10** (2026-11-12): RP-06 — motor de decisión puro (`motor_decision.py`), perfil de empresa, modelos `perfil_empresa`/`decision`, resumen LLM solo de las razones. Decisiones: presupuesto = `presupuesto_base_sin_iva` (rango inclusivo); solvencia se cuantifica con `maximo_importe_euros` (marcador de divisa, formato ES, None→REVISAR nunca NO-GO); campos críticos = objeto/presupuesto/fecha_limite/clasificacion/solvencia; clasificación vacía → NO-GO (conservador, a revisar en eval).
