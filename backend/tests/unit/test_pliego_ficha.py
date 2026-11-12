@@ -11,6 +11,15 @@ from app.domain.pliego_ficha import (
 )
 
 
+def test_campo_extraido_verificado_defaults_to_true_and_can_be_set_false() -> None:
+    """S4: ``verificado`` defaults to True; verification may only downgrade it."""
+    campo = CampoExtraido[str](valor="CN-2026/01")
+    assert campo.verificado is True
+
+    no_verificado = CampoExtraido[str].model_validate({"valor": "x", "verificado": False})
+    assert no_verificado.verificado is False
+
+
 def test_golden_rule_missing_fields_default_to_null_without_evidence() -> None:
     """A field that does not appear: valor = None, evidencia = [] (never invented)."""
     ficha = PliegoFicha()
@@ -21,6 +30,7 @@ def test_golden_rule_missing_fields_default_to_null_without_evidence() -> None:
         assert value.valor is None, name
         assert value.evidencia == [], name
         assert value.confianza is Confianza.BAJA, name
+        assert value.verificado is True, name
     # model_fields keys are the declared fields; the loop above already used them.
     assert set(PliegoFicha.model_fields) >= {"expediente", "objeto", "penalidades"}
 

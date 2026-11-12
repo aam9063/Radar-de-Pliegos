@@ -1,9 +1,13 @@
-"""Structured extraction of ``PliegoFicha`` from licitación pages (S3, RP-04).
+"""Structured extraction of ``PliegoFicha`` from licitación pages (S3, RP-04/RP-05).
 
-Orchestration lives here (services layer): the prompt is built from the
-licitación's pages with ``[[DOC:<tipo>|P:<número>]]`` markers, the LLM is
-reached through the ``LLMClient`` port, and the answer is validated against
-``PliegoFicha`` with a single retry before raising the typed domain error.
+Orchestration lives here (services layer): the licitación's documents are
+extracted one by one (BRIEF §7: "se envía documento a documento y se fusionan
+resultados"), each document's prompt is built from only its own pages with
+``[[DOC:<tipo>|P:<número>]]`` markers, the LLM is reached through the
+``LLMClient`` port, and each answer is validated against ``PliegoFicha`` with a
+single retry. The per-document results are then fused deterministically by
+source priority and their evidence is verified against the stored pages before
+anything is persisted.
 """
 
 import json
@@ -18,11 +22,10 @@ from sqlalchemy.orm import selectinload
 
 from app.core.config import Settings
 from app.db.models import Documento, Ficha, Licitacion
+from app.domain.fusion_ficha import SOURCE_PRIORITY, FichaFuente, fusionar_fichas
 from app.domain.llm import LLMClient, LLMInvalidJSONError
 from app.domain.pliego_ficha import ExtractionInvalidOutputError, PliegoFicha
-
-# BRIEF S3 source priority when sources conflict (RP-05 fuses with it).
-_SOURCE_PRIORITY: dict[str, int] = {"PCAP": 0, "ANEXO": 1, "PPT": 2, "OTRO": 3}
+from app.domain.verificacion_ficha import verificar_ficha
 
 PLIEGO_FICHA_SCHEMA: dict[str, Any] = PliegoFicha.model_json_schema()
 
@@ -63,7 +66,7 @@ def build_prompt(pages: Sequence[PageText]) -> str:
     ordered = sorted(
         pages,
         key=lambda page: (
-            _SOURCE_PRIORITY.get(page.documento, len(_SOURCE_PRIORITY)),
+            SOURCE_PRIORITY.get(page.documento, len(SOURCE_PRIORITY)),
             page.documento,
             page.numero,
         ),
@@ -114,18 +117,39 @@ class PliegoExtractor:
         return PliegoFicha.model_validate(answer)
 
 
-def _pages_from_documentos(documentos: Sequence[Documento]) -> tuple[list[PageText], int]:
-    """Collect page texts (skipping pages without text) and count those skipped."""
+def _pages_from_documento(documento: Documento) -> tuple[list[PageText], int]:
+    """Collect one document's page texts (skipping pages without text) and count those."""
     pages: list[PageText] = []
     skipped = 0
-    for documento in documentos:
-        tipo = documento.tipo.value
-        for pagina in documento.paginas:
-            if pagina.sin_texto or not pagina.texto.strip():
-                skipped += 1
-                continue
-            pages.append(PageText(documento=tipo, numero=pagina.numero, texto=pagina.texto))
+    for pagina in documento.paginas:
+        if pagina.sin_texto or not pagina.texto.strip():
+            skipped += 1
+            continue
+        pages.append(
+            PageText(documento=documento.tipo.value, numero=pagina.numero, texto=pagina.texto)
+        )
     return pages, skipped
+
+
+def _paginas_por_tipo(documentos: Sequence[Documento]) -> dict[str, dict[int, str]]:
+    """Map document type → page number → page text, for evidence verification."""
+    paginas: dict[str, dict[int, str]] = {}
+    for documento in documentos:
+        por_tipo = paginas.setdefault(documento.tipo.value, {})
+        for pagina in documento.paginas:
+            por_tipo[pagina.numero] = pagina.texto
+    return paginas
+
+
+def _documentos_ordenados(documentos: Sequence[Documento]) -> list[Documento]:
+    """Order documents by source priority (then id) so LLM calls are deterministic."""
+    return sorted(
+        documentos,
+        key=lambda documento: (
+            SOURCE_PRIORITY.get(documento.tipo.value, len(SOURCE_PRIORITY)),
+            documento.id,
+        ),
+    )
 
 
 async def extract_ficha_for_licitacion(
@@ -134,11 +158,14 @@ async def extract_ficha_for_licitacion(
     llm_client: LLMClient,
     settings: Settings,
 ) -> Ficha:
-    """Extract the dossier of ``licitacion`` and persist it as a ``Ficha`` row.
+    """Extract, fuse and verify the dossier of ``licitacion`` and persist it.
 
-    Nothing is persisted unless the extraction validates: the row is written
-    only after ``PliegoFicha`` validation succeeds (possibly after one retry).
-    An existing ficha is replaced so the table keeps one dossier per licitación.
+    Each document is extracted separately (one prompt per document, one retry
+    on invalid output). If ANY document's extraction fails even after its
+    retry, the typed error propagates and nothing is persisted. Otherwise the
+    per-document results are fused by source priority, their evidence is
+    verified against the stored pages, and the fused dossier replaces any
+    existing ``Ficha`` row (one dossier per licitación).
     """
     documentos = (
         await session.scalars(
@@ -147,14 +174,23 @@ async def extract_ficha_for_licitacion(
             .options(selectinload(Documento.paginas))
         )
     ).all()
-    pages, sin_texto = _pages_from_documentos(documentos)
 
     extractor = PliegoExtractor(llm_client, settings.extraction_model)
-    ficha = await extractor.extract(build_prompt(pages))
+    fuentes: list[FichaFuente] = []
+    sin_texto = 0
+    for documento in _documentos_ordenados(documentos):
+        pages, skipped = _pages_from_documento(documento)
+        sin_texto += skipped
+        ficha_documento = await extractor.extract(build_prompt(pages))
+        fuentes.append(FichaFuente(tipo=documento.tipo.value, ficha=ficha_documento))
+
+    fusion = fusionar_fichas(fuentes)
+    ficha = verificar_ficha(fusion.ficha, _paginas_por_tipo(documentos))
 
     avisos: list[str] = []
     if sin_texto:
         avisos.append(f"{sin_texto} páginas sin texto (escaneadas) se omitieron")
+    avisos.extend(fusion.avisos)
 
     existing = await session.scalar(select(Ficha).where(Ficha.licitacion_id == licitacion.id))
     if existing is not None:

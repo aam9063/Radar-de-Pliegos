@@ -41,10 +41,14 @@ def llm_client(request: pytest.FixtureRequest) -> FakeLLMClient | None:
     """Scripted LLM answers, set per test with indirect parametrization.
 
     Tests pass a list of outcomes via
-    ``@pytest.mark.parametrize("llm_client", [[...]], indirect=True)``;
-    without it, ``None`` keeps the real client dependency unoverridden.
+    ``@pytest.mark.parametrize("llm_client", [[...]], indirect=True)``; a fully
+    constructed ``FakeLLMClient`` (e.g. with a ``responder`` that answers per
+    document) is used as-is. Without parametrization, ``None`` keeps the real
+    client dependency unoverridden.
     """
     outcomes = getattr(request, "param", None)
+    if isinstance(outcomes, FakeLLMClient):
+        return outcomes
     return FakeLLMClient(outcomes) if outcomes is not None else None
 
 

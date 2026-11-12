@@ -12,6 +12,7 @@ from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from app.adapters.fake_llm_client import FakeLLMClient
 from app.db.models import Ficha, TipoDocumento
 from app.domain.llm import LLMInvalidJSONError
 from app.domain.pliego_ficha import PliegoFicha
@@ -46,6 +47,32 @@ async def _create_licitacion_with_pliego(client: AsyncClient, nombre: str) -> in
     )
     assert upload.status_code == 201, upload.text
     return licitacion_id
+
+
+async def _upload_documento(
+    client: AsyncClient, licitacion_id: int, tipo: TipoDocumento, texto: str
+) -> None:
+    response = await client.post(
+        f"/licitaciones/{licitacion_id}/documentos",
+        files={"file": ("documento.pdf", _pdf_with_text(texto), "application/pdf")},
+        data={"tipo": tipo.value},
+    )
+    assert response.status_code == 201, response.text
+
+
+def _ficha_responder_por_documento(
+    pcap: dict[str, object], ppt: dict[str, object]
+) -> FakeLLMClient:
+    """Fake that answers each document's extraction with its scripted ficha."""
+
+    def responder(model: str, prompt: str, schema: dict[str, object]) -> dict[str, object]:
+        if "[[DOC:PCAP" in prompt:
+            return pcap
+        if "[[DOC:PPT" in prompt:
+            return ppt
+        raise AssertionError(f"prompt inesperado: {prompt[:80]}")
+
+    return FakeLLMClient(responder=responder)
 
 
 def _valid_ficha_answer() -> dict[str, object]:
@@ -171,6 +198,115 @@ async def test_extraer_validation_error_is_retried_once_then_success(
     assert response.status_code == 200, response.text
     assert len(llm_client.calls) == 2
     assert "expediente" in llm_client.calls[1]["prompt"]
+
+
+@pytest.mark.parametrize(
+    "llm_client",
+    [
+        FakeLLMClient(
+            responder=lambda _model, prompt, _schema: (
+                {
+                    "presupuesto_base_sin_iva": {
+                        "valor": 1_000_000.0,
+                        "evidencia": [
+                            {"documento": "PCAP", "pagina": 1, "cita": "Presupuesto: 1.000.000 EUR"}
+                        ],
+                        "confianza": "alta",
+                    }
+                }
+                if "[[DOC:PCAP" in prompt
+                else {
+                    "presupuesto_base_sin_iva": {
+                        "valor": 950_000.0,
+                        "evidencia": [
+                            {"documento": "PPT", "pagina": 1, "cita": "Presupuesto: 950.000 EUR"}
+                        ],
+                        "confianza": "alta",
+                    }
+                }
+            )
+        )
+    ],
+    indirect=True,
+)
+async def test_extraer_per_document_calls_fuse_with_source_priority_and_conflict_aviso(
+    client: tuple[AsyncClient, async_sessionmaker[AsyncSession]],
+    llm_client: FakeLLMClient,
+) -> None:
+    """AC-07: PCAP and PPT disagree on the budget → PCAP wins with a conflict aviso."""
+    client_http, session_maker = client
+    licitacion_id = await _create_licitacion_with_pliego(client_http, "Licitación fusión")
+    await _upload_documento(
+        client_http, licitacion_id, TipoDocumento.PPT, "Presupuesto: 950.000 EUR"
+    )
+
+    response = await client_http.post(f"/licitaciones/{licitacion_id}/extraer")
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    # One LLM call per document, each prompt containing only its own pages.
+    assert len(llm_client.calls) == 2
+    pcap_prompt = next(
+        call["prompt"] for call in llm_client.calls if "[[DOC:PCAP" in call["prompt"]
+    )
+    ppt_prompt = next(call["prompt"] for call in llm_client.calls if "[[DOC:PPT" in call["prompt"])
+    assert "[[DOC:PPT" not in pcap_prompt
+    assert "[[DOC:PCAP" not in ppt_prompt
+
+    assert body["datos"]["presupuesto_base_sin_iva"]["valor"] == 1_000_000.0
+    assert body["datos"]["presupuesto_base_sin_iva"]["evidencia"][0]["documento"] == "PCAP"
+    assert "presupuesto_base_sin_iva: conflicto PCAP vs PPT, gana PCAP" in body["avisos"]
+
+    async with session_maker() as session:
+        row = (
+            await session.execute(select(Ficha).where(Ficha.licitacion_id == licitacion_id))
+        ).scalar_one()
+    assert row.datos["presupuesto_base_sin_iva"]["valor"] == 1_000_000.0
+    assert "presupuesto_base_sin_iva: conflicto PCAP vs PPT, gana PCAP" in row.avisos
+
+
+@pytest.mark.parametrize(
+    "llm_client",
+    [
+        FakeLLMClient(
+            responder=lambda _model, _prompt, _schema: {
+                "objeto": {
+                    "valor": "Ampliación de hospital",
+                    "evidencia": [
+                        {
+                            "documento": "PCAP",
+                            "pagina": 1,
+                            "cita": "cita que no existe en la página",
+                        }
+                    ],
+                    "confianza": "alta",
+                },
+                "presupuesto_base_sin_iva": {
+                    "valor": 1_000_000.0,
+                    "evidencia": [
+                        {"documento": "PCAP", "pagina": 1, "cita": "Presupuesto: 1.000.000 EUR"}
+                    ],
+                    "confianza": "alta",
+                },
+            }
+        )
+    ],
+    indirect=True,
+)
+async def test_extraer_marks_fields_with_unverifiable_evidence_not_verificado(
+    client: tuple[AsyncClient, async_sessionmaker[AsyncSession]],
+) -> None:
+    """AC-05: a cita absent from the cited page → verificado false; a matching one stays true."""
+    client_http, _session_maker = client
+    licitacion_id = await _create_licitacion_with_pliego(client_http, "Licitación verificación")
+
+    response = await client_http.post(f"/licitaciones/{licitacion_id}/extraer")
+
+    assert response.status_code == 200, response.text
+    datos = response.json()["datos"]
+    assert datos["objeto"]["verificado"] is False
+    assert datos["objeto"]["valor"] == "Ampliación de hospital"
+    assert datos["presupuesto_base_sin_iva"]["verificado"] is True
 
 
 @pytest.mark.parametrize("llm_client", [[LLMInvalidJSONError("unused")]], indirect=True)

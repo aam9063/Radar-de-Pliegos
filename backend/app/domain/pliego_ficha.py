@@ -45,11 +45,17 @@ class Evidencia(BaseModel):
 
 
 class CampoExtraido[T](BaseModel):
-    """One extracted field: value plus the evidence that supports it."""
+    """One extracted field: value plus the evidence that supports it.
+
+    ``verificado`` records the deterministic evidence check (S4, RP-05): it
+    stays ``True`` unless one of the field's evidencias could not be matched
+    against the cited page's text.
+    """
 
     valor: T | None = None
     evidencia: list[Evidencia] = []
     confianza: Confianza = Confianza.BAJA
+    verificado: bool = True
 
 
 class RevisionPrecios(BaseModel):
