@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   backend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     services:
       db:
         image: pgvector/pgvector:pg18
@@ -57,7 +57,7 @@ jobs:
           DATABASE_URL: postgresql+asyncpg://radar:radar@localhost:5432/radar
 
   frontend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -86,7 +86,7 @@ jobs:
 
   e2e:
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - name: Start stack
@@ -117,7 +117,7 @@ jobs:
           retention-days: 14
 
   docker:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - name: Build images
