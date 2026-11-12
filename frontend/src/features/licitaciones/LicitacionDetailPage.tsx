@@ -15,6 +15,7 @@ import {
   type Ficha,
 } from '../../lib/api'
 import { FICHA_SECCIONES, contarCampos, formatValor, tieneValor } from './ficha'
+import { PlanificacionCard } from './PlanificacionGantt'
 
 /** Callback of any reference chip: jump the viewer to a document page. */
 type SaltarFn = (documentoId: number, pagina: number, cita: string, verificado: boolean) => void
@@ -466,6 +467,8 @@ export default function LicitacionDetailPage() {
           onCambiarPagina={setPagina}
         />
       </div>
+
+      <PlanificacionCard licitacionId={licitacionId} />
     </section>
   )
 }

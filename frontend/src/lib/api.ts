@@ -101,6 +101,26 @@ export interface Decision {
   creada_en: string
 }
 
+export interface ActividadPlanificada {
+  nombre: string
+  duracion_dias: number
+  predecesoras: string[]
+  inicio_temprano: number
+  fin_temprano: number
+  inicio_tardio: number
+  fin_tardio: number
+  holgura: number
+  es_critica: boolean
+  evidencia: Evidencia[]
+}
+
+export interface Planificacion {
+  licitacion_id: number
+  makespan: number
+  ruta_critica: string[]
+  actividades: ActividadPlanificada[]
+}
+
 export interface ClasificacionEmpresa {
   grupo: string
   subgrupo: string
@@ -163,6 +183,14 @@ export async function getFicha(licitacionId: number): Promise<Ficha> {
 
 export async function getDecision(licitacionId: number): Promise<Decision> {
   return request<Decision>(`/licitaciones/${licitacionId}/decision`)
+}
+
+export async function getPlanificacion(licitacionId: number): Promise<Planificacion> {
+  return request<Planificacion>(`/licitaciones/${licitacionId}/planificacion`)
+}
+
+export function planificacionCsvUrl(licitacionId: number): string {
+  return apiUrl(`/licitaciones/${licitacionId}/planificacion.csv`)
 }
 
 export async function getPerfil(): Promise<PerfilEmpresa | null> {

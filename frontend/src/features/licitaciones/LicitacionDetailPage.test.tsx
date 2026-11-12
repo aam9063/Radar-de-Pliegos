@@ -14,6 +14,9 @@ vi.mock('../../lib/api', () => ({
   getFicha: vi.fn(),
   getDecision: vi.fn(),
   extraerFicha: vi.fn(),
+  getPlanificacion: vi.fn(),
+  planificacionCsvUrl: (licitacionId: number) =>
+    `http://localhost:8000/licitaciones/${licitacionId}/planificacion.csv`,
 }))
 
 const mockedDocumentos: Documento[] = [
