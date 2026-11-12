@@ -12,6 +12,7 @@ dependencies = [
     "pydantic-settings>=2.16.2",
     "pymupdf>=2.1",
     "python-dotenv>=1.2.4",
+    "python-multipart>=0.0.33",
     "sqlalchemy[asyncio]>=2.1.8",
     "uvicorn>=0.54.0",
 ]
