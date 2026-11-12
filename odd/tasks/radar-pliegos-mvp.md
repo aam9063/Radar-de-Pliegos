@@ -40,7 +40,7 @@ Fuente de verdad: `BRIEF.md`. Se cita literalmente. Cada `S#` enlaza los criteri
 - [x] **RP-05** Verificación de evidencias y fusión con prioridad de fuentes — cubre AC-05, AC-07 — route: worker (`gentle-ai-worker`) — commit: `e81ade1`
 - [x] **RP-06** Perfil de empresa y motor de decisión — cubre AC-06 — route: worker (`gentle-ai-worker`) — commit: `4790acc`
 - [x] **RP-07** Frontend: lista, subida, ficha + visor, decisión, perfil — cubre AC-09 — route: worker (`gentle-ai-worker`) — commit: `96b09d6` `f00e2ea`
-- [ ] **RP-08** Evaluación con 5 pliegos e informe — cubre AC-08 — route: — commit: —
+- [x] **RP-08** Evaluación con 5 pliegos e informe — cubre AC-08 — route: worker (`gentle-ai-worker`) — commit: `65447e8`
 - [ ] **RP-09** README y cierre de la Fase 1 — cubre AC-12 — route: — commit: —
 - [ ] **RP-10** (Fase 2) Planificador CPM + Gantt — cubre AC-13 — route: — commit: —
 
@@ -60,6 +60,7 @@ Fuente de verdad: `BRIEF.md`. Se cita literalmente. Cada `S#` enlaza los criteri
 | RP-05 | `ModuleNotFoundError: No module named 'app.domain.fusion_ficha'` (collection) | `73 passed` | backend `ruff check`/`format`/`mypy --strict` OK · `pytest` 73 passed (22 nuevas + 51 previas) | `e81ade1` | medium → slice close |
 | RP-06 | `ModuleNotFoundError: No module named 'app.domain.motor_decision'` (collection) | `103 passed` | backend `ruff check`/`format`/`mypy --strict` OK · `pytest` 103 passed (30 nuevas + 73 previas) · `alembic check` OK | `4790acc` | medium → slice close |
 | RP-07 | backend `assert 404 == 200` (PDF endpoint) / frontend `Failed to resolve import ../../lib/api` | backend `109 passed` · frontend `vitest 5` + `playwright 3` | backend `ruff`/`mypy` OK · frontend `eslint`/`tsc`/`vitest`/`build` OK · e2e OK | `96b09d6` `f00e2ea` | medium → slice close |
+| RP-08 | `ModuleNotFoundError: No module named 'evals.comparacion'` (collection) | `153 passed` | backend `ruff`/`format`/`mypy --strict` OK · `pytest` 153 passed (44 nuevas + 109 previas) · `python -m evals.run` exit 1 (sin NAN_API_KEY, esperado) | `65447e8` | medium → slice close |
 
 ## Progress / Next step
 
@@ -73,7 +74,8 @@ Fuente de verdad: `BRIEF.md`. Se cita literalmente. Cada `S#` enlaza los criteri
 - [x] RP-05 cerrado: extracción por documento + fusión determinista (prioridad PCAP>ANEXO>PPT>OTRO + avisos de conflicto) + verificación fuzzy de citas (≥0,9 → `verificado`), 73 tests, assess medium.
 - [x] RP-06 cerrado: perfil de empresa + motor de decisión puro (6 reglas, NO-GO>REVISAR, razones con evidencia) + resumen LLM, 103 tests, assess medium.
 - [x] RP-07 cerrado: frontend completo según los 3 mockups (lista/nueva/detalle/perfil) + `GET /documentos/{id}/pdf` + `GET /licitaciones/{id}/documentos` + CORS, 109 backend + 5 vitest + 3 e2e, assess medium.
-- [ ] RP-08 en curso.
+- [x] RP-08 cerrado: runner `python -m evals.run` + comparación determinista + informe markdown + esquema ground truth, 153 tests, assess medium. Falta la parte manual: 5 pliegos reales + anotaciones de Albert.
+- [ ] RP-09 en curso.
 
 ### Hallazgos RDD (no bloqueantes, follow-up)
 
@@ -94,3 +96,5 @@ Fuente de verdad: `BRIEF.md`. Se cita literalmente. Cada `S#` enlaza los criteri
 - **L9** (2026-11-12): RP-05 — refactor a extracción por documento, `fusion_ficha.py` (prioridad + avisos), `verificacion_ficha.py` (normalización + `partial_ratio/100 ≥ 0,9` → `verificado`), `CampoExtraido.verificado`. Umbral fuzzy correcto: `partial_ratio` es 0-100, se divide por 100.
 - **L10** (2026-11-12): RP-06 — motor de decisión puro (`motor_decision.py`), perfil de empresa, modelos `perfil_empresa`/`decision`, resumen LLM solo de las razones. Decisiones: presupuesto = `presupuesto_base_sin_iva` (rango inclusivo); solvencia se cuantifica con `maximo_importe_euros` (marcador de divisa, formato ES, None→REVISAR nunca NO-GO); campos críticos = objeto/presupuesto/fecha_limite/clasificacion/solvencia; clasificación vacía → NO-GO (conservador, a revisar en eval).
 - **L11** (2026-11-12): RP-07 — frontend siguiendo los 3 mockups (`frontend/docs/mock/*.dc.html`, versionados en `ac2ee33`). Se añadieron 2 endpoints backend habilitadores (aprobados por el parent, requeridos por AC-09): `GET /licitaciones/{id}/documentos` (mapeo tipo→id del visor) y CORS `localhost:5173`. El salto del visor usa iframe `#page=N` (resaltar la cita dentro del PDF necesitaría PDF.js, fuera de scope).
+- **L12** (2026-11-12, Albert): el push **no** es automático: al cerrar fase (o cuando haya trabajo listo) le **pregunto** "¿Hago push de `<rama>` a `origin`?" y solo pusheo si dice sí explícito para esa rama. Las PR las abre Albert. Remote: `https://github.com/aam9063/Radar-de-Pliegos.git` (repo vacío, sin ramas aún → el primer push debe establecer `main` y `dev`).
+- **L13** (2026-11-12): RP-08 — runner `backend/evals/` (comparación determinista con tolerancia 0,1% en económicos, listas order-insensitive, both-None correcto, alucinación = fallo; informe `evals/results/<fecha>.md` en español). Data dir: `--data-dir` > `EVALS_DIR` > `../evals`. AC-08 manual pendiente: 5 pliegos reales + ground_truth de Albert.
