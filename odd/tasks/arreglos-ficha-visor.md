@@ -22,7 +22,11 @@
 - Frontend: `pnpm vitest run` → 24 passed; `pnpm lint`, `pnpm typecheck`, `pnpm build` limpios.
 - Funcional: contenedores `api` y `web` reconstruidos; `curl -D -` sobre el PDF restaurado devuelve `content-disposition: inline; filename="EXP4.pdf"`.
 - Riesgo detectado fuera de alcance (no se toca): la suite de integración del backend apunta al Postgres de `docker compose` y vacía el esquema, así que correr `uv run pytest` borra las licitaciones locales.
-- RDD (nivel: **unavailable**): revisión nativa iniciada (linaje `review-086a8f749add8435`, `medium`, 4 lentes, 28 ficheros, presupuesto 200). El reviewer de `risk` devolvió un payload que no replica el `subject_hash` del binding (perdió 4 caracteres hex: `sha256:2819ae3d6972454031c5d063204f53919806a9480deaa55efbbf11e12a85` frente a `sha256:2819ae3d6d2b6972454031c5d063204f53919806a9480deaa55efbbf11e12a85`), así que la admisión lo rechazó con `binding_mismatch`. Payload preservado en `.git/gentle-ai/rejected-results/review-086a8f749add8435/review-risk-1-35d1c3f4ac07.json`. Sus `findings` estaban vacíos. No se consumió ninguna lente y no se reintenta sin autorización nueva de Albert.
+- RDD (nivel: **unavailable**): revisión nativa iniciada (linaje `review-086a8f749add8435`, `medium`, 4 lentes, 28 ficheros, presupuesto 200). Dos intentos, 8 ejecuciones de modelo, dos defectos distintos del reviewer `nan/qwen3.6` en el relay:
+  1. Intento 1 — `risk` devolvió un `subject_hash` truncado (perdió `6d2b`): rechazo `binding_mismatch`. Payload en `.git/gentle-ai/rejected-results/review-086a8f749add8435/review-risk-1-35d1c3f4ac07.json` (`findings: []`).
+  2. Intento 2 — `risk` **admitido** (la autoridad avanzó a `sha256:e8b677e5…`); `resilience` devolvió un payload sin objeto JSON raíz: rechazo `admission incomplete`. Payload en `…/review-resilience-1-11b4dbd8633d.json`.
+
+  Estado actual: 1 de 4 lentes admitida (`risk`, sin hallazgos), pendientes `resilience`, `readability` y `reliability`. No se reintenta sin una autorización nueva de Albert. El código no tiene hallazgo alguno abierto: los dos rechazos son del transporte del reviewer, no del candidato.
 
 ## Log
 
