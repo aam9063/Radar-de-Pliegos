@@ -1,0 +1,77 @@
+# Render Blueprint for Radar de Pliegos.
+#
+# Deploy: Render Dashboard -> New -> Blueprint -> pick this repository.
+# Render reads this file, creates the three resources below and prompts for the
+# variables marked `sync: false` (secrets and public URLs that are not in git).
+#
+# Keep every resource in the same region: the API reaches the database over the
+# private network only when both live in the same region.
+
+databases:
+  - name: radar-db
+    databaseName: radar
+    user: radar
+    # The free plan is deleted 30 days after creation. Switch to `basic` for a
+    # demo that must survive past that window.
+    plan: free
+    region: frankfurt
+
+services:
+  # API: FastAPI, Alembic migrations at boot, original PDFs on a disk.
+  - type: web
+    name: radar-api
+    runtime: docker
+    # A persistent disk requires a paid instance type.
+    plan: starter
+    region: frankfurt
+    branch: main
+    # Both paths are relative to the repository root.
+    dockerContext: ./backend
+    dockerfilePath: ./backend/Dockerfile
+    healthCheckPath: /health
+    disk:
+      name: radar-storage
+      mountPath: /app/storage
+      sizeGB: 1
+    envVars:
+      # Render hands over postgresql://...; the app normalises it to asyncpg.
+      - key: DATABASE_URL
+        fromDatabase:
+          name: radar-db
+          property: connectionString
+      - key: STORAGE_DIR
+        value: /app/storage
+      - key: NAN_API_KEY
+        sync: false
+      # Public origin of the static site, e.g. https://radar-web.onrender.com
+      - key: FRONTEND_ORIGINS
+        sync: false
+
+  # Frontend: Vite build served from the CDN, with the SPA fallback route.
+  - type: web
+    name: radar-web
+    runtime: static
+    region: frankfurt
+    branch: main
+    rootDir: frontend
+    # packageManager pins pnpm; corepack makes it available on the build host.
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build
+    staticPublishPath: ./dist
+    envVars:
+      # Public base URL of the API, e.g. https://radar-api.onrender.com
+      - key: VITE_API_URL
+        sync: false
+    routes:
+      # Client-side routes must return the shell instead of a 404.
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      # Vite emits content-hashed assets: cache them forever.
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+      # The shell names the current bundle: never cache it.
+      - path: /index.html
+        name: Cache-Control
+        value: no-store, must-revalidate
