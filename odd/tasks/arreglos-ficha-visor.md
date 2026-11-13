@@ -59,7 +59,9 @@
 
 **RDD:** native review unavailable (reviewer relay produced non-conforming payloads twice; see the RDD entry above). Substituted by the manual 4R review above, which found and fixed one real regression (paging stuck on page 1).
 
-**Known follow-ups (not in this PR):** `X-Content-Type-Options: nosniff` on the PDF response; nginx SPA fallback for deep links (404 on refresh); backend tests share the compose database and wipe local data; unify `formatValor`/`describirValor`; extraction quality of free-text fields like `subcontratacion_limites`.
+**Known follow-ups (not in this PR):** `X-Content-Type-Options: nosniff` on the PDF response; backend tests share the compose database and wipe local data; unify `formatValor`/`describirValor`; extraction quality of free-text fields like `subcontratacion_limites`.
+
+> Fixed afterwards in `fix/spa-nginx`: nginx served `index.html` with no `Cache-Control`, so browsers kept a stale shell pointing at the previous bundle, and client-side routes returned 404 on refresh. `frontend/nginx.conf` now sends `no-store` for the shell, `immutable` for hashed assets and falls back to `index.html`.
 
 ## Log
 
