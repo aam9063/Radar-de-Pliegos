@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ResultadoBadge } from '../../components/badges'
 import {
+  ApiError,
   apiUrl,
   extraerFicha,
   getDecision,
@@ -14,7 +15,15 @@ import {
   type Evidencia,
   type Ficha,
 } from '../../lib/api'
-import { FICHA_SECCIONES, contarCampos, formatValor, tieneValor } from './ficha'
+import {
+  FICHA_SECCIONES,
+  contarCampos,
+  describirValor,
+  evidenciasUnicas,
+  formatValor,
+  tieneValor,
+  type DescripcionValor,
+} from './ficha'
 import { PlanificacionCard } from './PlanificacionGantt'
 
 /** Callback of any reference chip: jump the viewer to a document page. */
@@ -127,6 +136,74 @@ function RecomendacionCard({
   )
 }
 
+/** Read-only rendering of one ficha value, keeping its structure (S4). */
+function ValorFicha({ descripcion }: { descripcion: DescripcionValor | null }) {
+  if (descripcion === null) {
+    return <span className="text-sm text-text-secondary">Sin dato</span>
+  }
+
+  switch (descripcion.tipo) {
+    case 'texto':
+      return <span className="text-sm font-medium text-text">{descripcion.texto}</span>
+    case 'lista':
+      return (
+        <ul className="flex flex-col gap-1.5 text-sm font-medium text-text">
+          {descripcion.items.map((item, indice) => (
+            <li key={`${indice}-${item}`} className="flex gap-2">
+              <span aria-hidden="true" className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-accent-radar" />
+              <span className="min-w-0">{item}</span>
+            </li>
+          ))}
+        </ul>
+      )
+    case 'clasificacion':
+      return (
+        <ul className="flex flex-wrap gap-1.5">
+          {descripcion.etiquetas.map((etiqueta) => (
+            <li
+              key={etiqueta}
+              className="rounded-md border border-border bg-background px-2 py-1 text-[13px] font-semibold text-text"
+            >
+              {etiqueta}
+            </li>
+          ))}
+        </ul>
+      )
+    case 'criterios':
+      return (
+        <ul className="flex flex-col divide-y divide-[#EDEDE8]">
+          {descripcion.items.map((criterio, indice) => (
+            <li
+              key={`${indice}-${criterio.nombre}`}
+              className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1 py-1.5 first:pt-0 last:pb-0"
+            >
+              <span className="min-w-0 flex-1 basis-60 text-sm font-medium text-text">
+                {criterio.nombre}
+              </span>
+              <span className="rounded-md bg-background px-1.5 py-0.5 text-[12px] text-text-secondary">
+                {criterio.tipo}
+              </span>
+              <span className="text-[13px] font-semibold tabular-nums text-accent-radar">
+                {criterio.ponderacion}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )
+    case 'pares':
+      return (
+        <dl className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+          {descripcion.pares.map((par) => (
+            <div key={par.etiqueta} className="flex gap-1.5">
+              <dt className="text-text-secondary">{par.etiqueta}:</dt>
+              <dd className="font-medium text-text">{par.valor}</dd>
+            </div>
+          ))}
+        </dl>
+      )
+  }
+}
+
 function FichaCard({
   ficha,
   documentosPorTipo,
@@ -166,32 +243,35 @@ function FichaCard({
             {seccion.campos.map(({ key, label }) => {
               const campo = ficha.datos[key]
               const conValor = campo !== undefined && tieneValor(ficha.datos, key)
+              const evidencias = campo === undefined ? [] : evidenciasUnicas(campo.evidencia)
               return (
-                <div key={key} className="flex flex-wrap items-center gap-3 py-2">
-                  <span className="w-44 shrink-0 text-sm text-text-secondary">{label}</span>
-                  <span
-                    className={`min-w-0 flex-1 basis-50 text-sm font-medium ${conValor ? 'text-text' : 'text-text-secondary'}`}
-                  >
-                    {conValor ? formatValor(campo.valor) : 'Sin dato'}
+                <div key={key} className="flex flex-col gap-2 py-3 sm:flex-row sm:gap-3">
+                  <span className="text-sm text-text-secondary sm:w-44 sm:shrink-0 sm:pt-0.5">
+                    {label}
                   </span>
-                  {conValor && campo.evidencia.length > 0 ? (
-                    campo.evidencia.map((evidencia, indice) => (
-                      <ChipReferencia
-                        key={`${key}-${indice}`}
-                        evidencia={evidencia}
-                        documento={documentosPorTipo.get(evidencia.documento)}
-                        ok={campo.verificado}
-                        ariaContexto={`Ver ${label}`}
-                        onSaltar={onSaltar}
-                      />
-                    ))
-                  ) : conValor ? (
-                    <span className="text-[13px] text-text-secondary">Sin evidencia</span>
-                  ) : (
-                    <span className="rounded-lg border border-dashed border-[#C9C9C2] px-2.5 py-1.5 text-[13px] text-text-secondary">
-                      No aparece
-                    </span>
-                  )}
+                  <div className="flex min-w-0 flex-1 flex-col gap-2">
+                    <ValorFicha descripcion={conValor ? describirValor(campo.valor) : null} />
+                    {conValor && evidencias.length > 0 ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {evidencias.map((evidencia, indice) => (
+                          <ChipReferencia
+                            key={`${key}-${indice}`}
+                            evidencia={evidencia}
+                            documento={documentosPorTipo.get(evidencia.documento)}
+                            ok={campo.verificado}
+                            ariaContexto={`Ver ${label}`}
+                            onSaltar={onSaltar}
+                          />
+                        ))}
+                      </div>
+                    ) : conValor ? (
+                      <span className="text-[13px] text-text-secondary">Sin evidencia</span>
+                    ) : (
+                      <span className="self-start rounded-lg border border-dashed border-[#C9C9C2] px-2.5 py-1.5 text-[13px] text-text-secondary">
+                        No aparece
+                      </span>
+                    )}
+                  </div>
                 </div>
               )
             })}
@@ -291,12 +371,29 @@ function VisorPanel({
         {docVisible === null ? (
           <p className="text-center text-sm text-text-secondary">Sube un PDF para verlo aquí.</p>
         ) : (
-          <iframe
-            title="Visor del documento"
-            key={`${docVisible.id}-${pagina}`}
-            src={`${apiUrl(`/documentos/${docVisible.id}/pdf`)}#page=${pagina}`}
-            className="h-[60vh] min-h-[420px] w-full rounded border border-border bg-surface"
-          />
+          <div className="flex flex-col gap-2">
+            {/*
+             * Keyed by page on purpose: the browser PDF plugin only applies
+             * `#page=` when the document loads, so paging requires a fresh
+             * iframe. The API answers with `inline` + Cache-Control, so this
+             * remount is served from the HTTP cache instead of re-downloading
+             * the file (S1).
+             */}
+            <iframe
+              title="Visor del documento"
+              key={`${docVisible.id}-${pagina}`}
+              src={`${apiUrl(`/documentos/${docVisible.id}/pdf`)}#page=${pagina}`}
+              className="h-[60vh] min-h-[420px] w-full rounded border border-border bg-surface"
+            />
+            <a
+              href={apiUrl(`/documentos/${docVisible.id}/pdf#page=${pagina}`)}
+              target="_blank"
+              rel="noreferrer"
+              className="self-start text-[13px] text-accent-radar hover:underline"
+            >
+              Abrir el PDF en una pestaña nueva
+            </a>
+          </div>
         )}
       </div>
 
@@ -348,6 +445,19 @@ export default function LicitacionDetailPage() {
 
   const listaDocumentos = documentos.data ?? []
   const docIdVisible = docIdSel ?? listaDocumentos[0]?.id ?? null
+
+  const fichaAusente = ficha.isError && ficha.error instanceof ApiError && ficha.error.status === 404
+  const extraccionAuto = useRef(false)
+  const extraerMutate = extraer.mutate
+
+  // S3: a licitación with uploaded documents but no ficha gets extracted once
+  // on arrival, so the user does not have to press «Volver a extraer». The ref
+  // keeps it to a single automatic attempt per visit.
+  useEffect(() => {
+    if (!fichaAusente || listaDocumentos.length === 0 || extraccionAuto.current) return
+    extraccionAuto.current = true
+    extraerMutate()
+  }, [fichaAusente, listaDocumentos.length, extraerMutate])
 
   function saltarA(documentoId: number, numeroPagina: number, cita: string, verificado: boolean) {
     const documento = listaDocumentos.find((item) => item.id === documentoId)
@@ -438,8 +548,15 @@ export default function LicitacionDetailPage() {
             />
           )}
 
-          {ficha.isPending && <p className="text-sm text-text-secondary">Cargando ficha…</p>}
-          {ficha.isError && (
+          {ficha.isPending && !extraer.isPending && (
+            <p className="text-sm text-text-secondary">Cargando ficha…</p>
+          )}
+          {extraer.isPending && (
+            <p className="text-sm text-text-secondary" role="status">
+              Extrayendo la ficha…
+            </p>
+          )}
+          {ficha.isError && !extraer.isPending && (
             <p className="text-sm text-text-secondary">
               Aún no se ha extraído la ficha de esta licitación. Pulsa «Volver a extraer» para
               generarla.
