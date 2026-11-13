@@ -373,13 +373,15 @@ function VisorPanel({
         ) : (
           <div className="flex flex-col gap-2">
             {/*
-             * One stable iframe: only the `#page=` fragment changes when the
-             * user moves through pages, so the browser navigates inside the
-             * already loaded document instead of re-downloading the PDF (S1).
-             * It must not be keyed by page.
+             * Keyed by page on purpose: the browser PDF plugin only applies
+             * `#page=` when the document loads, so paging requires a fresh
+             * iframe. The API answers with `inline` + Cache-Control, so this
+             * remount is served from the HTTP cache instead of re-downloading
+             * the file (S1).
              */}
             <iframe
               title="Visor del documento"
+              key={`${docVisible.id}-${pagina}`}
               src={`${apiUrl(`/documentos/${docVisible.id}/pdf`)}#page=${pagina}`}
               className="h-[60vh] min-h-[420px] w-full rounded border border-border bg-surface"
             />

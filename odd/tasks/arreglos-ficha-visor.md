@@ -22,11 +22,25 @@
 - Frontend: `pnpm vitest run` → 24 passed; `pnpm lint`, `pnpm typecheck`, `pnpm build` limpios.
 - Funcional: contenedores `api` y `web` reconstruidos; `curl -D -` sobre el PDF restaurado devuelve `content-disposition: inline; filename="EXP4.pdf"`.
 - Riesgo detectado fuera de alcance (no se toca): la suite de integración del backend apunta al Postgres de `docker compose` y vacía el esquema, así que correr `uv run pytest` borra las licitaciones locales.
-- RDD (nivel: **unavailable**): revisión nativa iniciada (linaje `review-086a8f749add8435`, `medium`, 4 lentes, 28 ficheros, presupuesto 200). Dos intentos, 8 ejecuciones de modelo, dos defectos distintos del reviewer `nan/qwen3.6` en el relay:
+- RDD (nivel: **unavailable**, sustituido por revisión 4R manual — autorizado por Albert el 2026-11-13): revisión nativa iniciada (linaje `review-086a8f749add8435`, `medium`, 4 lentes, 28 ficheros, presupuesto 200). Dos intentos, 8 ejecuciones de modelo, dos defectos distintos del reviewer `nan/qwen3.6` en el relay:
   1. Intento 1 — `risk` devolvió un `subject_hash` truncado (perdió `6d2b`): rechazo `binding_mismatch`. Payload en `.git/gentle-ai/rejected-results/review-086a8f749add8435/review-risk-1-35d1c3f4ac07.json` (`findings: []`).
   2. Intento 2 — `risk` **admitido** (la autoridad avanzó a `sha256:e8b677e5…`); `resilience` devolvió un payload sin objeto JSON raíz: rechazo `admission incomplete`. Payload en `…/review-resilience-1-11b4dbd8633d.json`.
 
-  Estado actual: 1 de 4 lentes admitida (`risk`, sin hallazgos), pendientes `resilience`, `readability` y `reliability`. No se reintenta sin una autorización nueva de Albert. El código no tiene hallazgo alguno abierto: los dos rechazos son del transporte del reviewer, no del candidato.
+  Estado: 1 de 4 lentes admitida (`risk`, sin hallazgos), linaje abierto con `resilience`, `readability` y `reliability` pendientes. Los commits de bitácora posteriores movieron el `target_identity` (ahora `sha256:4c2ba4a7…`) y el proveedor ofrece un linaje nuevo (`review-11d482bdc0ee0798`), que **no** se abrió para no duplicar autoridad ni gastar 4 ejecuciones más.
+
+## Revisión 4R manual del slice (`182625d..HEAD`)
+
+**Risk — sin hallazgos de bloqueo.** El cambio en `backend/app/api/documentos.py:74-81` altera el `Content-Disposition` y agrega `Cache-Control: private, max-age=300`; no toca `resolve_pdf_path` (sigue confinando la ruta a `storage_dir`, líneas 20-36) ni permisos. El visor carga el PDF desde el origen de la API en un `iframe`; el visor nativo de Chrome no ejecuta JS del PDF en el contexto de la página. **Propuesta (no aplicada, fuera de alcance):** añadir `X-Content-Type-Options: nosniff` a esa respuesta como endurecimiento.
+
+**Resilience — un defecto encontrado y corregido.** La primera versión mantenía un solo `iframe` y cambiaba solo el fragmento `#page=`: verificado en el navegador real, el indicador pasaba a «Página 2 de 31» pero **el PDF seguía en la página 1** (el plugin de Chrome solo honra `#page=` al cargar el documento). Corregido: el `iframe` vuelve a llevar `key` por página y el endpoint sirve `inline` + `Cache-Control`, así el remonte navega sin volver a bajar el fichero. La extracción automática es un único intento por visita (ref, sin bucle); si falla, la alerta y la pista de «Volver a extraer» quedan visibles.
+
+**Readability — dos observaciones menores.** (1) Conviven dos caminos de formateo: `formatValor` (solo para la línea de metadatos) y `describirValor` (ficha); conviene unificarlos cuando se toque de nuevo. (2) En `ficha.ts`, la detección de duración exige exactamente dos claves (`valor` + `unidad`); si la extracción agrega una tercera, degrada a filas `Valor: … · Unidad: …` en vez de «3 meses».
+
+**Reliability — cobertura suficiente, dos huecos anotados.** 8 tests backend del endpoint y 23 frontend (descriptores, render, extracción automática, navegación del visor). Huecos: no hay test del camino «la extracción automática falla» (alerta + pista), ni de `describirValor(null)`/lista vacía.
+
+**Hallazgo fuera de alcance (no tocar sin autorización):** el contenedor `web` (nginx) devuelve **404 en rutas profundas**; `http://localhost:5173/licitaciones/284` falla y solo funciona navegando desde la lista. Falta el fallback de SPA (`try_files $uri /index.html`) en la configuración de nginx. Por eso la verificación visual se hizo navegando desde `/`.
+
+**Evidencia visual (navegador de Orca, `http://localhost:5173/licitaciones/284`)**: el PDF se renderiza dentro del visor (antes: recuadro blanco), 7 filas de criterios con nombre, tipo legible y ponderación, evidencias deduplicadas en su propia línea, y el enlace «Abrir el PDF en una pestaña nueva».
 
 ## Log
 

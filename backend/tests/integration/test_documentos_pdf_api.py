@@ -72,6 +72,25 @@ async def test_fetch_pdf_is_served_inline_for_the_embedded_viewer(
     assert 'filename="pliego.pdf"' in disposicion
 
 
+async def test_fetch_pdf_is_cacheable_to_avoid_re_downloads(
+    client: tuple[AsyncClient, async_sessionmaker[AsyncSession]],
+) -> None:
+    """S1: the viewer remounts its iframe per page so the browser PDF plugin
+
+    actually navigates; caching keeps that remount off the network.
+    """
+    client_http, _session_maker = client
+
+    created = await client_http.post("/licitaciones", json={"nombre": "Licitación PDF"})
+    licitacion_id = int(created.json()["id"])  # type: ignore[arg-type]
+    documento = await _upload_pdf(client_http, licitacion_id, "PCAP")
+
+    response = await client_http.get(f"/documentos/{documento['id']}/pdf")
+
+    assert response.headers["cache-control"] == "private, max-age=300"
+    assert "etag" in response.headers
+
+
 async def test_fetch_pdf_unknown_documento_returns_404(
     client: tuple[AsyncClient, async_sessionmaker[AsyncSession]],
 ) -> None:
