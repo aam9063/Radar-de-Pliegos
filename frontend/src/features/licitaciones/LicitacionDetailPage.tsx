@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ResultadoBadge } from '../../components/badges'
 import {
+  ApiError,
   apiUrl,
   extraerFicha,
   getDecision,
@@ -291,12 +292,27 @@ function VisorPanel({
         {docVisible === null ? (
           <p className="text-center text-sm text-text-secondary">Sube un PDF para verlo aquí.</p>
         ) : (
-          <iframe
-            title="Visor del documento"
-            key={`${docVisible.id}-${pagina}`}
-            src={`${apiUrl(`/documentos/${docVisible.id}/pdf`)}#page=${pagina}`}
-            className="h-[60vh] min-h-[420px] w-full rounded border border-border bg-surface"
-          />
+          <div className="flex flex-col gap-2">
+            {/*
+             * One stable iframe: only the `#page=` fragment changes when the
+             * user moves through pages, so the browser navigates inside the
+             * already loaded document instead of re-downloading the PDF (S1).
+             * It must not be keyed by page.
+             */}
+            <iframe
+              title="Visor del documento"
+              src={`${apiUrl(`/documentos/${docVisible.id}/pdf`)}#page=${pagina}`}
+              className="h-[60vh] min-h-[420px] w-full rounded border border-border bg-surface"
+            />
+            <a
+              href={apiUrl(`/documentos/${docVisible.id}/pdf#page=${pagina}`)}
+              target="_blank"
+              rel="noreferrer"
+              className="self-start text-[13px] text-accent-radar hover:underline"
+            >
+              Abrir el PDF en una pestaña nueva
+            </a>
+          </div>
         )}
       </div>
 
@@ -348,6 +364,19 @@ export default function LicitacionDetailPage() {
 
   const listaDocumentos = documentos.data ?? []
   const docIdVisible = docIdSel ?? listaDocumentos[0]?.id ?? null
+
+  const fichaAusente = ficha.isError && ficha.error instanceof ApiError && ficha.error.status === 404
+  const extraccionAuto = useRef(false)
+  const extraerMutate = extraer.mutate
+
+  // S3: a licitación with uploaded documents but no ficha gets extracted once
+  // on arrival, so the user does not have to press «Volver a extraer». The ref
+  // keeps it to a single automatic attempt per visit.
+  useEffect(() => {
+    if (!fichaAusente || listaDocumentos.length === 0 || extraccionAuto.current) return
+    extraccionAuto.current = true
+    extraerMutate()
+  }, [fichaAusente, listaDocumentos.length, extraerMutate])
 
   function saltarA(documentoId: number, numeroPagina: number, cita: string, verificado: boolean) {
     const documento = listaDocumentos.find((item) => item.id === documentoId)
@@ -438,8 +467,15 @@ export default function LicitacionDetailPage() {
             />
           )}
 
-          {ficha.isPending && <p className="text-sm text-text-secondary">Cargando ficha…</p>}
-          {ficha.isError && (
+          {ficha.isPending && !extraer.isPending && (
+            <p className="text-sm text-text-secondary">Cargando ficha…</p>
+          )}
+          {extraer.isPending && (
+            <p className="text-sm text-text-secondary" role="status">
+              Extrayendo la ficha…
+            </p>
+          )}
+          {ficha.isError && !extraer.isPending && (
             <p className="text-sm text-text-secondary">
               Aún no se ha extraído la ficha de esta licitación. Pulsa «Volver a extraer» para
               generarla.

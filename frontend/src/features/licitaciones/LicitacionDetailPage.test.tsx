@@ -3,12 +3,21 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { getDecision, getFicha, listDocumentos } from '../../lib/api'
+import { ApiError, getDecision, getFicha, listDocumentos, extraerFicha } from '../../lib/api'
 import type { Decision, Documento, Ficha } from '../../lib/api'
 import LicitacionDetailPage from './LicitacionDetailPage'
 
 vi.mock('../../lib/api', () => ({
   apiUrl: (path: string) => `http://localhost:8000${path}`,
+  ApiError: class ApiError extends Error {
+    readonly status: number
+
+    constructor(status: number, message: string) {
+      super(message)
+      this.name = 'ApiError'
+      this.status = status
+    }
+  },
   listLicitaciones: vi.fn(),
   listDocumentos: vi.fn(),
   getFicha: vi.fn(),
@@ -103,6 +112,7 @@ function renderDetailPage() {
 
 describe('LicitacionDetailPage (AC-09)', () => {
   beforeEach(() => {
+    vi.clearAllMocks()
     vi.mocked(listDocumentos).mockResolvedValue(mockedDocumentos)
     vi.mocked(getFicha).mockResolvedValue(mockedFicha)
     vi.mocked(getDecision).mockResolvedValue(mockedDecision)
@@ -136,7 +146,6 @@ describe('LicitacionDetailPage (AC-09)', () => {
 
     await user.click(screen.getByRole('button', { name: /PCAP · p\. 12/ }))
 
-    // The iframe is remounted on page change (key change): re-query it.
     const visor = screen.getByTitle('Visor del documento')
     expect(visor.getAttribute('src')).toContain('/documentos/7/pdf#page=12')
     expect(screen.getByTestId('pagina-indicador')).toHaveTextContent('Página 12 de 20')
@@ -161,11 +170,74 @@ describe('LicitacionDetailPage (AC-09)', () => {
     const user = userEvent.setup()
     renderDetailPage()
 
-    await screen.findByTitle('Visor del documento')
+    const visor = await screen.findByTitle('Visor del documento')
     expect(screen.getByTestId('pagina-indicador')).toHaveTextContent('Página 1 de 20')
 
     await user.click(screen.getByRole('button', { name: 'Página siguiente' }))
 
     expect(screen.getByTestId('pagina-indicador')).toHaveTextContent('Página 2 de 20')
+    // S1/S2: the PDF must not be re-requested on every page move, so the same
+    // iframe element stays mounted and only its page fragment changes.
+    const visorTrasPaginar = screen.getByTitle('Visor del documento')
+    expect(visorTrasPaginar).toBe(visor)
+    expect(visorTrasPaginar.getAttribute('src')).toBe(
+      'http://localhost:8000/documentos/7/pdf#page=2',
+    )
+  })
+
+  it('keeps one iframe when jumping to a cited page of the same document', async () => {
+    const user = userEvent.setup()
+    renderDetailPage()
+
+    const visor = await screen.findByTitle('Visor del documento')
+
+    await user.click(screen.getByRole('button', { name: /PCAP · p\. 12/ }))
+
+    const visorTrasSaltar = screen.getByTitle('Visor del documento')
+    expect(visorTrasSaltar).toBe(visor)
+    expect(visorTrasSaltar.getAttribute('src')).toBe(
+      'http://localhost:8000/documentos/7/pdf#page=12',
+    )
+  })
+
+  it('extracts the ficha automatically once when documents exist but no ficha does', async () => {
+    let resolver: (ficha: Ficha) => void = () => undefined
+    vi.mocked(getFicha).mockRejectedValueOnce(new ApiError(404, 'No existe la ficha'))
+    vi.mocked(extraerFicha).mockReturnValue(
+      new Promise<Ficha>((resolve) => {
+        resolver = resolve
+      }),
+    )
+
+    renderDetailPage()
+
+    expect(await screen.findByText('Extrayendo la ficha…')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(extraerFicha).toHaveBeenCalledTimes(1)
+    })
+    expect(extraerFicha).toHaveBeenCalledWith(1)
+
+    resolver(mockedFicha)
+
+    // The extracted ficha shows up without pressing «Volver a extraer» (S3).
+    expect(await screen.findByText('Presupuesto base (sin IVA)')).toBeInTheDocument()
+    expect(extraerFicha).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not extract automatically when the ficha is already there', async () => {
+    renderDetailPage()
+
+    await screen.findByText('Presupuesto base (sin IVA)')
+    expect(extraerFicha).not.toHaveBeenCalled()
+  })
+
+  it('does not extract automatically when the licitación has no documents', async () => {
+    vi.mocked(listDocumentos).mockResolvedValue([])
+    vi.mocked(getFicha).mockRejectedValue(new ApiError(404, 'No existe la ficha'))
+
+    renderDetailPage()
+
+    expect(await screen.findByText('Sube un PDF para verlo aquí.')).toBeInTheDocument()
+    expect(extraerFicha).not.toHaveBeenCalled()
   })
 })
