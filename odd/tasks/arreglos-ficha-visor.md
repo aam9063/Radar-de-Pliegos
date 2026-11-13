@@ -40,7 +40,26 @@
 
 **Hallazgo fuera de alcance (no tocar sin autorización):** el contenedor `web` (nginx) devuelve **404 en rutas profundas**; `http://localhost:5173/licitaciones/284` falla y solo funciona navegando desde la lista. Falta el fallback de SPA (`try_files $uri /index.html`) en la configuración de nginx. Por eso la verificación visual se hizo navegando desde `/`.
 
-**Evidencia visual (navegador de Orca, `http://localhost:5173/licitaciones/284`)**: el PDF se renderiza dentro del visor (antes: recuadro blanco), 7 filas de criterios con nombre, tipo legible y ponderación, evidencias deduplicadas en su propia línea, y el enlace «Abrir el PDF en una pestaña nueva».
+**Evidencia visual (navegador de Orca, `http://localhost:5173/licitaciones/290`)**: el PDF se renderiza dentro del visor (antes: recuadro blanco), 7 filas de criterios con nombre, tipo legible y ponderación, evidencias deduplicadas en su propia línea, y el enlace «Abrir el PDF en una pestaña nueva».
+- Corrección `ba3989d`: checks finales — backend 223 tests, `ruff`, `ruff format --check`, `mypy --strict`; frontend 24 tests, `lint`, `typecheck`, `build`. Verificación en navegador tras reconstruir contenedores: página 1 → página 2 muestra «Cláusula 1. Objeto y calificación» con `src …#page=2`.
+
+## Borrador de PR (inglés)
+
+**Title:** fix(web): render the pliego PDF and make the ficha readable
+
+**Summary**
+- Serve `GET /documentos/{id}/pdf` with `Content-Disposition: inline` and `Cache-Control: private, max-age=300`; `attachment` made the browser download the file instead of rendering it, which is why the viewer was blank.
+- Key the viewer iframe by page again (the PDF plugin only honours `#page=` on load) so paging navigates; the cache header keeps the remount off the network. Added an "open in a new tab" fallback.
+- Auto-extract the ficha once when a licitación has documents but no ficha, instead of waiting for a manual «Volver a extraer».
+- Render ficha values by shape: adjudication criteria as name/kind/weight rows, string lists as bullets, durations as "3 meses", classification as `G-4-4`, and evidence chips on their own row with repeats collapsed per document page.
+
+**Acceptance criteria covered:** S1–S4 of `odd/tasks/arreglos-ficha-visor.md`.
+
+**How to test:** `docker compose up -d --build`, upload a pliego, open the detail view: the PDF renders, paging moves the page without a new download, the ficha appears without pressing the button, and the criteria render as rows.
+
+**RDD:** native review unavailable (reviewer relay produced non-conforming payloads twice; see the RDD entry above). Substituted by the manual 4R review above, which found and fixed one real regression (paging stuck on page 1).
+
+**Known follow-ups (not in this PR):** `X-Content-Type-Options: nosniff` on the PDF response; nginx SPA fallback for deep links (404 on refresh); backend tests share the compose database and wipe local data; unify `formatValor`/`describirValor`; extraction quality of free-text fields like `subcontratacion_limites`.
 
 ## Log
 
