@@ -79,8 +79,7 @@ const mockedFicha: Ficha = {
   },
 }
 
-const mockedDecision: Decision = {
-  id: 1,
+const mockedDecision: Decision = {  id: 1,
   licitacion_id: 1,
   resultado: 'REVISAR',
   razones: [
@@ -95,8 +94,7 @@ const mockedDecision: Decision = {
   creada_en: '2026-11-12T10:05:00Z',
 }
 
-function renderDetailPage() {
-  const queryClient = new QueryClient({
+function renderDetailPage() {  const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
   return render(
@@ -109,6 +107,88 @@ function renderDetailPage() {
     </QueryClientProvider>,
   )
 }
+
+describe('LicitacionDetailPage structured ficha rendering (S4)', () => {
+  const fichaCompleta: Ficha = {
+    ...mockedFicha,
+    avisos: [],
+    datos: {
+      ...mockedFicha.datos,
+      plazo_ejecucion: {
+        valor: { valor: '3', unidad: 'meses' },
+        evidencia: [{ documento: 'PCAP', pagina: 20, cita: 'Plazo de ejecución de 3 meses' }],
+        confianza: 'alta',
+        verificado: true,
+      },
+      clasificacion_exigida: {
+        valor: [{ grupo: 'G', subgrupo: '4', categoria: '4' }],
+        evidencia: [{ documento: 'PCAP', pagina: 20, cita: 'Grupo G, subgrupo 4, categoría 4' }],
+        confianza: 'alta',
+        verificado: true,
+      },
+      penalidades: {
+        valor: ['Por demora: 0,60 euros por cada 1.000 euros', 'Por incumplimiento: 10 % del precio'],
+        evidencia: [{ documento: 'PCAP', pagina: 23, cita: 'Penalidades por demora' }],
+        confianza: 'alta',
+        verificado: true,
+      },
+      criterios_adjudicacion: {
+        valor: [
+          {
+            tipo: 'juicio_valor',
+            nombre: 'Memoria técnica de ejecución',
+            ponderacion: 'Hasta 20 puntos',
+          },
+          {
+            tipo: 'automatico',
+            nombre: 'Incremento de superficie pavimentada',
+            ponderacion: 'Hasta 50 puntos',
+          },
+        ],
+        // Same document and page twice: the viewer must show one chip.
+        evidencia: [
+          { documento: 'PCAP', pagina: 23, cita: 'Criterio memoria técnica' },
+          { documento: 'PCAP', pagina: 23, cita: 'Criterio memoria técnica (repetido)' },
+          { documento: 'PCAP', pagina: 25, cita: 'Criterio superficie pavimentada' },
+        ],
+        confianza: 'alta',
+        verificado: true,
+      },
+    },
+  }
+
+  beforeEach(() => {
+    vi.mocked(getFicha).mockResolvedValue(fichaCompleta)
+  })
+
+  it('lists the adjudication criteria with name, kind and weight instead of one joined line', async () => {
+    renderDetailPage()
+
+    expect(await screen.findByText('Memoria técnica de ejecución')).toBeInTheDocument()
+    expect(screen.getByText('Incremento de superficie pavimentada')).toBeInTheDocument()
+    expect(screen.getByText('Juicio de valor')).toBeInTheDocument()
+    expect(screen.getByText('Automático')).toBeInTheDocument()
+    expect(screen.getAllByText('Hasta 20 puntos').length).toBeGreaterThan(0)
+    expect(screen.queryByText(/juicio_valor · Memoria técnica/)).not.toBeInTheDocument()
+  })
+
+  it('renders lists as items, the duration as "3 meses" and the classification as one tag', async () => {
+    renderDetailPage()
+
+    expect(await screen.findByText('Por demora: 0,60 euros por cada 1.000 euros')).toBeInTheDocument()
+    expect(screen.getByText('Por incumplimiento: 10 % del precio')).toBeInTheDocument()
+    expect(screen.getByText('3 meses')).toBeInTheDocument()
+    expect(screen.getByText('G-4-4')).toBeInTheDocument()
+  })
+
+  it('shows one evidence chip per document page even when the ficha repeats it', async () => {
+    renderDetailPage()
+
+    await screen.findByText('Memoria técnica de ejecución')
+    expect(screen.getAllByRole('button', { name: /PCAP · p\. 23/ })).toHaveLength(2)
+    expect(screen.getAllByRole('button', { name: /PCAP · p\. 25/ })).toHaveLength(1)
+  })
+})
 
 describe('LicitacionDetailPage (AC-09)', () => {
   beforeEach(() => {
