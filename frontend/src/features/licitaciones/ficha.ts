@@ -1,4 +1,4 @@
-import type { FichaDatos } from '../../lib/api'
+import type { Evidencia, FichaDatos } from '../../lib/api'
 
 export interface FichaCampo {
   key: string
@@ -86,9 +86,143 @@ export function formatValor(valor: unknown): string {
   }
   return String(valor)
 }
+/** Spanish labels for the structured keys the extraction may emit (S4). */
+const ETIQUETAS_CLAVE: Record<string, string> = {
+  grupo: 'Grupo',
+  subgrupo: 'Subgrupo',
+  categoria: 'Categoría',
+  tipo: 'Tipo',
+  nombre: 'Nombre',
+  ponderacion: 'Ponderación',
+  valor: 'Valor',
+  unidad: 'Unidad',
+  aplica: 'Aplica',
+  formula: 'Fórmula',
+}
 
-/** True when a field carries a value (the golden rule: absent means null). */
-export function tieneValor(datos: FichaDatos, key: string): boolean {
+/** Human labels for the adjudication criteria kinds of the domain schema. */
+const TIPOS_CRITERIO: Record<string, string> = {
+  juicio_valor: 'Juicio de valor',
+  automatico: 'Automático',
+}
+
+export interface CriterioDescrito {
+  nombre: string
+  tipo: string
+  ponderacion: string
+}
+
+export interface ParDescrito {
+  etiqueta: string
+  valor: string
+}
+
+/**
+ * A ficha value rendered with its own shape (S4), so views never flatten a
+ * structured value into one " · " joined sentence.
+ */
+export type DescripcionValor =
+  | { tipo: 'texto'; texto: string }
+  | { tipo: 'lista'; items: string[] }
+  | { tipo: 'criterios'; items: CriterioDescrito[] }
+  | { tipo: 'clasificacion'; etiquetas: string[] }
+  | { tipo: 'pares'; pares: ParDescrito[] }
+
+function esObjeto(valor: unknown): valor is Record<string, unknown> {
+  return typeof valor === 'object' && valor !== null && !Array.isArray(valor)
+}
+
+function etiquetaClave(clave: string): string {
+  const conocida = ETIQUETAS_CLAVE[clave]
+  if (conocida !== undefined) return conocida
+  const texto = clave.replace(/_/g, ' ')
+  return texto.charAt(0).toUpperCase() + texto.slice(1)
+}
+
+function formatearEscalar(valor: unknown): string {
+  if (valor === null || valor === undefined || valor === '') return '—'
+  if (typeof valor === 'string') return valor
+  if (typeof valor === 'number') return numberFormatter.format(valor)
+  if (typeof valor === 'boolean') return valor ? 'Sí' : 'No'
+  if (Array.isArray(valor)) return valor.map(formatearEscalar).join(', ')
+  if (esObjeto(valor)) {
+    return Object.entries(valor)
+      .filter(([, part]) => part !== null && part !== undefined && part !== '')
+      .map(([clave, part]) => `${etiquetaClave(clave)}: ${formatearEscalar(part)}`)
+      .join(' · ')
+  }
+  return String(valor)
+}
+
+function describirCriterio(item: Record<string, unknown>): CriterioDescrito {
+  const tipo = typeof item.tipo === 'string' ? item.tipo : ''
+  return {
+    nombre: formatearEscalar(item.nombre),
+    tipo: TIPOS_CRITERIO[tipo] ?? etiquetaClave(tipo),
+    ponderacion: formatearEscalar(item.ponderacion),
+  }
+}
+
+/**
+ * Describes an extracted value for display, preserving its structure: lists
+ * stay lists, criteria keep name/kind/weight and small objects keep their keys.
+ */
+export function describirValor(valor: unknown): DescripcionValor {
+  if (Array.isArray(valor)) {
+    if (valor.length === 0) return { tipo: 'texto', texto: '—' }
+    if (valor.every((item) => esObjeto(item) && 'nombre' in item)) {
+      return { tipo: 'criterios', items: valor.map((item) => describirCriterio(item)) }
+    }
+    if (valor.every((item) => esObjeto(item) && 'grupo' in item)) {
+      return {
+        tipo: 'clasificacion',
+        etiquetas: valor.map((item) =>
+          [item.grupo, item.subgrupo, item.categoria]
+            .filter((parte) => parte !== null && parte !== undefined && parte !== '')
+            .map(formatearEscalar)
+            .join('-'),
+        ),
+      }
+    }
+    return {
+      tipo: 'lista',
+      items: valor.map(formatearEscalar).filter((item) => item !== '—'),
+    }
+  }
+
+  if (esObjeto(valor)) {
+    const claves = Object.keys(valor)
+    if (claves.length === 2 && 'valor' in valor && 'unidad' in valor) {
+      return { tipo: 'texto', texto: `${formatearEscalar(valor.valor)} ${formatearEscalar(valor.unidad)}` }
+    }
+    if ('aplica' in valor && typeof valor.aplica === 'boolean') {
+      if (!valor.aplica) return { tipo: 'texto', texto: 'No aplica' }
+      const formula = formatearEscalar(valor.formula)
+      return { tipo: 'texto', texto: formula === '—' ? 'Sí' : `Sí — ${formula}` }
+    }
+    return {
+      tipo: 'pares',
+      pares: Object.entries(valor)
+        .filter(([, parte]) => parte !== null && parte !== undefined && parte !== '')
+        .map(([clave, parte]) => ({ etiqueta: etiquetaClave(clave), valor: formatearEscalar(parte) })),
+    }
+  }
+
+  return { tipo: 'texto', texto: formatearEscalar(valor) }
+}
+
+/** Evidence chips deduplicated per document and page (S4). */
+export function evidenciasUnicas(evidencias: Evidencia[]): Evidencia[] {
+  const vistas = new Set<string>()
+  const unicas: Evidencia[] = []
+  for (const evidencia of evidencias) {
+    const clave = `${evidencia.documento}|${evidencia.pagina}`
+    if (vistas.has(clave)) continue
+    vistas.add(clave)
+    unicas.push(evidencia)
+  }
+  return unicas
+}export function tieneValor(datos: FichaDatos, key: string): boolean {
   const campo = datos[key]
   return campo !== undefined && campo.valor !== null && campo.valor !== undefined
 }

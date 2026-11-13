@@ -62,4 +62,6 @@ async def descargar_pdf(
         pdf_path,
         media_type="application/pdf",
         filename=documento.nombre_fichero,
+        content_disposition_type="inline",
+        headers={"Cache-Control": "private, max-age=300"},
     )
