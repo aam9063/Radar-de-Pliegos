@@ -11,17 +11,20 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from app.adapters.fake_llm_client import FakeLLMClient
-from app.api.deps import get_llm_client
-from app.core.config import Settings, get_settings
-from app.db.session import get_session
-from app.main import create_app
-
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 
-# The compose service name is `db`; from the host it is localhost. CI sets
+# The application reads its settings when the modules below are imported and
+# caches them, so the test database URL must already be in the environment at
+# that moment. Otherwise a developer `.env` (whose host is the compose service
+# `db`) leaks into the test run and the suite loses determinism. CI sets
 # DATABASE_URL itself, so only fall back to localhost here.
 os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://radar:radar@localhost:5432/radar")
+
+from app.adapters.fake_llm_client import FakeLLMClient  # noqa: E402
+from app.api.deps import get_llm_client  # noqa: E402
+from app.core.config import Settings, get_settings  # noqa: E402
+from app.db.session import get_session  # noqa: E402
+from app.main import create_app  # noqa: E402
 
 
 @pytest.fixture(scope="session")
