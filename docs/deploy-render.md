@@ -21,16 +21,17 @@ serves from a global CDN and keeps the API free to scale on its own.
 | Resource | Plan in `render.yaml` | Notes |
 | --- | --- | --- |
 | `radar-web` (static site) | Free | CDN, no process |
-| `radar-db` (Postgres) | Free | **Deleted 30 days after creation.** Switch to `basic` to keep data |
-| `radar-api` (Docker + disk) | Starter | A persistent disk requires a paid instance type |
+| `radar-db` (Postgres) | Free | **Deleted 30 days after creation.** Switch to a paid plan to keep data |
+| `radar-api` (Docker + disk) | `0.5c-512mb` (Starter class) | A persistent disk requires a paid instance type |
 
 If you only need a short-lived demo, the free database is fine. If the data must
-survive, change `plan: free` to `plan: basic` under `databases:` before creating
-the Blueprint — Render does not let you downgrade a database back to free later.
+survive, change `plan: free` under `databases:` to a paid plan ID from Render's
+current list (for example `0.1c-256mb`) **before** creating the Blueprint:
+Render does not allow moving a paid database back to the free plan.
 
-**Cheaper alternative without the disk:** remove the `disk:` block and set the
-API plan to `free`. Uploaded PDFs then live on an ephemeral filesystem and are
-lost on every deploy or restart, so every demo needs the PDFs uploaded again.
+**Cheaper alternative without the disk:** remove the `disk:` block and switch
+the API `plan` to `free`. Uploaded PDFs then live on an ephemeral filesystem and
+are lost on every deploy or restart, so every demo needs the PDFs uploaded again.
 Everything else works the same.
 
 ## Prerequisites

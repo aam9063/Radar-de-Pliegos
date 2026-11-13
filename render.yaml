@@ -21,8 +21,10 @@ services:
   - type: web
     name: radar-api
     runtime: docker
-    # A persistent disk requires a paid instance type.
-    plan: starter
+    # A persistent disk requires a paid instance type. Render lists instance
+    # types by compute (this one is the starter class, shown as "Starter" in
+    # the dashboard); the plan ID must match Render's current table.
+    plan: 0.5c-512mb
     region: frankfurt
     branch: main
     # Both paths are relative to the repository root.
