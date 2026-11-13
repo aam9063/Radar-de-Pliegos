@@ -16,12 +16,12 @@ fact carries its evidence: document, page and the literal quote that supports it
 
 ## What it looks like
 
-| Tender list | Tender detail |
-| --- | --- |
+| Tender list                                                                               | Tender detail                                                                                                |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | ![Tender list with counters, search and recommendation badges](frontend/public/img/1.png) | ![Tender detail with the recommendation card, the cited ficha and the PDF viewer](frontend/public/img/2.png) |
 
-| Company profile |
-| --- |
+| Company profile                                                                                             |
+| ----------------------------------------------------------------------------------------------------------- |
 | ![Company profile form: classifications, annual volume, provinces, budget range](frontend/public/img/3.png) |
 
 The detail view is the core of the product: on the left, the recommendation with its reasons and
@@ -125,12 +125,12 @@ flowchart TB
 or the AI SDK. That is what makes the rules testable in isolation and what keeps the LLM on the
 edge, where it belongs.
 
-| Layer | Responsibility | May import |
-| --- | --- | --- |
-| `app/domain/` | Pure business rules: decision engine, fusion, citation verification, CPM, schemas | stdlib, Pydantic only |
-| `app/services/` | Orchestration: extraction, storage, decision, CSV | domain, adapters, db |
-| `app/adapters/` | The only place that talks to the LLM provider | domain ports |
-| `app/api/` | HTTP surface and validation | services |
+| Layer           | Responsibility                                                                    | May import            |
+| --------------- | --------------------------------------------------------------------------------- | --------------------- |
+| `app/domain/`   | Pure business rules: decision engine, fusion, citation verification, CPM, schemas | stdlib, Pydantic only |
+| `app/services/` | Orchestration: extraction, storage, decision, CSV                                 | domain, adapters, db  |
+| `app/adapters/` | The only place that talks to the LLM provider                                     | domain ports          |
+| `app/api/`      | HTTP surface and validation                                                       | services              |
 
 ---
 
@@ -173,13 +173,19 @@ sequenceDiagram
 ```json
 {
   "valor": "3",
-  "evidencia": [{ "documento": "PCAP", "pagina": 20, "cita": "El plazo de ejecución será de 3 meses" }],
+  "evidencia": [
+    {
+      "documento": "PCAP",
+      "pagina": 20,
+      "cita": "El plazo de ejecución será de 3 meses"
+    }
+  ],
   "confianza": "alta",
   "verificado": true
 }
 ```
 
-`valor: null` means *not found*, which is information, not a failure. `verificado` means the quote
+`valor: null` means _not found_, which is information, not a failure. `verificado` means the quote
 was actually located on that page.
 
 ---
@@ -318,32 +324,32 @@ model**.
 
 ## API
 
-| Method | Path | Purpose |
-| --- | --- | --- |
-| `GET` | `/health` | Liveness |
-| `GET` `POST` | `/licitaciones` | List and create tenders |
-| `POST` | `/licitaciones/{id}/documentos` | Upload a PDF (multipart) and extract its pages |
-| `GET` | `/licitaciones/{id}/documentos` | Documents of a tender |
-| `GET` | `/documentos/{id}/pdf` | Original PDF, served `inline` for the viewer |
-| `POST` | `/licitaciones/{id}/extraer` | Run the extraction and store the ficha |
-| `GET` | `/licitaciones/{id}/ficha` | Extracted ficha with evidence |
-| `GET` | `/licitaciones/{id}/decision` | Verdict with its reasons |
-| `GET` `PUT` | `/perfil` | Company profile (single row) |
-| `GET` | `/licitaciones/{id}/planificacion` | CPM plan |
-| `GET` | `/licitaciones/{id}/planificacion.csv` | Same plan as CSV |
+| Method       | Path                                   | Purpose                                        |
+| ------------ | -------------------------------------- | ---------------------------------------------- |
+| `GET`        | `/health`                              | Liveness                                       |
+| `GET` `POST` | `/licitaciones`                        | List and create tenders                        |
+| `POST`       | `/licitaciones/{id}/documentos`        | Upload a PDF (multipart) and extract its pages |
+| `GET`        | `/licitaciones/{id}/documentos`        | Documents of a tender                          |
+| `GET`        | `/documentos/{id}/pdf`                 | Original PDF, served `inline` for the viewer   |
+| `POST`       | `/licitaciones/{id}/extraer`           | Run the extraction and store the ficha         |
+| `GET`        | `/licitaciones/{id}/ficha`             | Extracted ficha with evidence                  |
+| `GET`        | `/licitaciones/{id}/decision`          | Verdict with its reasons                       |
+| `GET` `PUT`  | `/perfil`                              | Company profile (single row)                   |
+| `GET`        | `/licitaciones/{id}/planificacion`     | CPM plan                                       |
+| `GET`        | `/licitaciones/{id}/planificacion.csv` | Same plan as CSV                               |
 
 ---
 
 ## Stack
 
-| Area | Choice |
-| --- | --- |
-| Backend | Python 3.14 · FastAPI · Pydantic v2 · SQLAlchemy 2 async · Alembic · PyMuPDF |
-| Database | PostgreSQL 18 with `pgvector` (`pgvector/pgvector:pg18`) |
-| Frontend | React 19 · TypeScript strict · Vite · pnpm · Tailwind CSS · TanStack Query · React Router |
-| AI | NaN Builders, OpenAI-compatible: `deepseek-v4-flash` for chat and extraction, `qwen3-embedding`, `rerank` |
-| Quality | `ruff`, `mypy --strict`, `pytest` · `eslint`, `prettier`, `tsc`, `vitest`, Playwright |
-| Infra | `docker compose` with `db`, `api` and `web`, all health-checked |
+| Area     | Choice                                                                                                    |
+| -------- | --------------------------------------------------------------------------------------------------------- |
+| Backend  | Python 3.14 · FastAPI · Pydantic v2 · SQLAlchemy 2 async · Alembic · PyMuPDF                              |
+| Database | PostgreSQL 18 with `pgvector` (`pgvector/pgvector:pg18`)                                                  |
+| Frontend | React 19 · TypeScript strict · Vite · pnpm · Tailwind CSS · TanStack Query · React Router                 |
+| AI       | NaN Builders, OpenAI-compatible: `deepseek-v4-flash` for chat and extraction, `qwen3-embedding`, `rerank` |
+| Quality  | `ruff`, `mypy --strict`, `pytest` · `eslint`, `prettier`, `tsc`, `vitest`, Playwright                     |
+| Infra    | `docker compose` with `db`, `api` and `web`, all health-checked                                           |
 
 **Why NaN Builders and an `LLMClient` port:** the provider is swappable and tests are free. The
 adapter enforces a semaphore of 5 concurrent calls with exponential backoff and jitter on 429 and
@@ -431,15 +437,15 @@ and the evaluation workflow is manual because it spends quota.
 
 ## Design decisions worth knowing
 
-| Decision | Why |
-| --- | --- |
-| The LLM never computes anything | A verdict must be reproducible and auditable; models are non-deterministic and confidently wrong |
-| One field = value + evidence + confidence + verified | Correctness is per field, and a field without a quote is unverifiable |
-| Extraction per document, merged by priority | Stops a bad source from overwriting a good one and surfaces conflicts as warnings |
-| Merge and verification are deterministic | Both are testable without a model and behave identically on every run |
+| Decision                                               | Why                                                                                                                       |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| The LLM never computes anything                        | A verdict must be reproducible and auditable; models are non-deterministic and confidently wrong                          |
+| One field = value + evidence + confidence + verified   | Correctness is per field, and a field without a quote is unverifiable                                                     |
+| Extraction per document, merged by priority            | Stops a bad source from overwriting a good one and surfaces conflicts as warnings                                         |
+| Merge and verification are deterministic               | Both are testable without a model and behave identically on every run                                                     |
 | PDFs served `inline` with cache, viewer keyed per page | The browser plugin only honours `#page=` on load, so paging reloads the document — served from cache, never re-downloaded |
-| `index.html` served `no-store` | A cached shell keeps pointing at the previous bundle and the app silently looks old |
-| Ambiguity yields REVISAR, never a guess | A wrong GO on a tender you cannot legally bid costs a whole bid cycle |
+| `index.html` served `no-store`                         | A cached shell keeps pointing at the previous bundle and the app silently looks old                                       |
+| Ambiguity yields REVISAR, never a guess                | A wrong GO on a tender you cannot legally bid costs a whole bid cycle                                                     |
 
 ---
 
@@ -464,13 +470,13 @@ publication date, raise list extraction precision, and add embeddings-based sear
 
 ## Documentation
 
-| Document | Contains |
-| --- | --- |
-| `BRIEF.md` | Product specification: problem, personas, phases, acceptance criteria |
-| `AGENTS.md` | Stack, conventions and the working agreement for agents |
-| `odd/tasks/*.md` | One feature document per feature: specs, tasks, evidence, decisions |
-| `evals/README.md` | How evaluation works and how to run it |
-| `INFORME.md` | Project report: what was built, in what order, and what went wrong |
+| Document          | Contains                                                              |
+| ----------------- | --------------------------------------------------------------------- |
+| `BRIEF.md`        | Product specification: problem, personas, phases, acceptance criteria |
+| `AGENTS.md`       | Stack, conventions and the working agreement for agents               |
+| `odd/tasks/*.md`  | One feature document per feature: specs, tasks, evidence, decisions   |
+| `evals/README.md` | How evaluation works and how to run it                                |
+| `INFORME.md`      | Project report: what was built, in what order, and what went wrong    |
 
 ---
 
