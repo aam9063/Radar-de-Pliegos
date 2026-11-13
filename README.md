@@ -480,6 +480,3 @@ publication date, raise list extraction precision, and add embeddings-based sear
 
 ---
 
-Built by Albert as a deep dive into the problem Miranda AI solves, before talking to the people
-building it. Architecture, rules and evaluation are meant to be read as much as the UI is meant to
-be used.
