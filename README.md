@@ -24,6 +24,16 @@ fact carries its evidence: document, page and the literal quote that supports it
 | ----------------------------------------------------------------------------------------------------------- |
 | ![Company profile form: classifications, annual volume, provinces, budget range](frontend/public/img/3.png) |
 
+### Inside a tender
+
+| A NO-GO verdict with its reasons                                                                      | The cited ficha                                                                                        |
+| ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| ![NO-GO card: the company does not hold the required classification G-4-4](frontend/public/img/4.png) | ![Ficha identification and economic sections, every value with a page chip](frontend/public/img/5.png) |
+
+| Requirements and scoring criteria                                                                                  | Risks, guarantees and the planner                                                                                 |
+| ------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| ![Required classification rendered as a tag and the scoring criteria with their weight](frontend/public/img/6.png) | ![Penalties as a list, guarantees, subcontracting limits and the construction planner](frontend/public/img/7.png) |
+
 The detail view is the core of the product: on the left, the recommendation with its reasons and
 the extracted ficha where **every value carries a chip** pointing at the document and page it came
 from; on the right, the original PDF. Clicking a chip jumps the viewer to that page.
@@ -479,4 +489,3 @@ publication date, raise list extraction precision, and add embeddings-based sear
 | `INFORME.md`      | Project report: what was built, in what order, and what went wrong    |
 
 ---
-
