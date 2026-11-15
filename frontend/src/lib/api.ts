@@ -6,7 +6,20 @@
  * compose API.
  */
 
-const API_BASE: string = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:8000'
+/**
+ * Resolve the API base URL from the build-time value.
+ *
+ * The bundle can carry an empty string when the image is built without
+ * `VITE_API_URL` (Docker turns a missing build argument into ""), and a falsy
+ * value must fall back to the local API rather than produce relative requests.
+ * A trailing slash is stripped so paths are not doubled.
+ */
+export function resolverApiBase(valor: string | undefined): string {
+  const limpio = valor?.trim()
+  return limpio === undefined || limpio === '' ? 'http://localhost:8000' : limpio.replace(/\/+$/, '')
+}
+
+const API_BASE: string = resolverApiBase(import.meta.env.VITE_API_URL as string | undefined)
 
 export function apiUrl(path: string): string {
   return `${API_BASE}${path}`
