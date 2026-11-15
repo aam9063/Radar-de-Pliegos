@@ -29,8 +29,12 @@ test('create a licitación, upload a PDF and reach the detail view (AC-09 smoke)
   await expect(visor).toHaveAttribute('src', /\/documentos\/\d+\/pdf#page=1$/)
   await expect(page.getByTestId('pagina-indicador')).toHaveText('Página 1 de 2')
 
-  // Without a seeded extraction there is no ficha yet: the empty state shows.
-  await expect(page.getByText(/Aún no se ha extraído la ficha/)).toBeVisible()
+  // The detail view starts the extraction on arrival. CI has no LLM key, so the
+  // page shows either the in-flight state or the empty state once it fails;
+  // pinning one of them would make this smoke test depend on timing and quota.
+  await expect(
+    page.getByText(/Extrayendo la ficha…|Aún no se ha extraído la ficha/),
+  ).toBeVisible()
 })
 
 test('the list shows the created licitación', async ({ page }) => {

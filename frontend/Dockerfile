@@ -10,6 +10,13 @@ COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
 COPY . .
+
+# Vite inlines the API base URL at build time, so it must be present before the
+# build runs. Hosts that configure build variables (NaN Cloud, Render) pass it
+# as a Docker build argument.
+ARG VITE_API_URL
+ENV VITE_API_URL=${VITE_API_URL}
+
 RUN pnpm build
 
 FROM nginx:1.27-alpine
