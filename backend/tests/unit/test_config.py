@@ -42,6 +42,39 @@ def test_database_url_translates_sslmode_for_asyncpg() -> None:
     )
 
 
+def test_database_url_drops_libpq_only_parameters() -> None:
+    """Neon appends ``channel_binding``, which asyncpg turns into a TypeError."""
+
+    settings = Settings(
+        database_url=(
+            "postgresql://radar:pw@ep-cool.eu-central-1.aws.neon.tech/radar"
+            "?sslmode=require&channel_binding=require"
+        )
+    )
+
+    assert settings.database_url == (
+        "postgresql+asyncpg://radar:pw@ep-cool.eu-central-1.aws.neon.tech/radar?ssl=require"
+    )
+
+
+def test_database_url_keeps_parameters_asyncpg_understands() -> None:
+    settings = Settings(
+        database_url=(
+            "postgresql://radar:pw@host:5432/radar"
+            "?sslmode=require&channel_binding=require&command_timeout=30"
+        )
+    )
+
+    assert settings.database_url.endswith("?ssl=require&command_timeout=30")
+
+
+def test_database_url_without_query_is_unchanged() -> None:
+    assert (
+        Settings(database_url="postgresql://radar:pw@host:5432/radar").database_url
+        == "postgresql+asyncpg://radar:pw@host:5432/radar"
+    )
+
+
 def test_frontend_origins_default_to_the_local_dev_server() -> None:
     origenes = Settings().frontend_origins
 

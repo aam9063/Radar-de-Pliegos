@@ -13,6 +13,7 @@ deployment (Render) overrides them through environment variables:
 
 from functools import lru_cache
 from typing import Annotated
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
@@ -21,6 +22,21 @@ from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 LOCAL_FRONTEND_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"]
 
 _SCHEMES_TO_UPGRADE = ("postgres://", "postgresql://")
+
+# libpq accepts far more connection parameters than asyncpg, which raises a
+# TypeError on the ones it does not know (for example Neon's `channel_binding`).
+# Only these survive normalisation; the scheme is what selects asyncpg, so the
+# rest of a hosted URL is host-specific noise.
+_ASYNCPG_QUERY_PARAMS = frozenset(
+    {
+        "ssl",
+        "timeout",
+        "command_timeout",
+        "statement_cache_size",
+        "server_settings",
+        "target_session_attrs",
+    }
+)
 
 
 class Settings(BaseSettings):
@@ -40,14 +56,30 @@ class Settings(BaseSettings):
     @field_validator("database_url")
     @classmethod
     def _normalise_database_url(cls, valor: str) -> str:
-        """Accept the plain Postgres URL a host hands over and add the driver."""
+        """Make a hosted Postgres URL usable by asyncpg.
+
+        Three things happen: the scheme gains the asyncpg driver, ``sslmode``
+        becomes ``ssl`` (the name asyncpg understands) and every query parameter
+        asyncpg would reject is dropped instead of crashing the connection.
+        """
 
         for esquema in _SCHEMES_TO_UPGRADE:
             if valor.startswith(esquema):
                 valor = f"postgresql+asyncpg://{valor[len(esquema) :]}"
                 break
-        # asyncpg takes ``ssl=require``; hosts hand out ``sslmode=require``.
-        return valor.replace("sslmode=", "ssl=")
+
+        partes = urlsplit(valor)
+        if not partes.query:
+            return valor
+
+        parametros = [
+            ("ssl" if clave == "sslmode" else clave, contenido)
+            for clave, contenido in parse_qsl(partes.query, keep_blank_values=True)
+        ]
+        admitidos = [
+            (clave, contenido) for clave, contenido in parametros if clave in _ASYNCPG_QUERY_PARAMS
+        ]
+        return urlunsplit(partes._replace(query=urlencode(admitidos)))
 
     @field_validator("frontend_origins", mode="before")
     @classmethod
