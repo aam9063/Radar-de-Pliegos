@@ -1,4 +1,13 @@
+<a href="https://nan.builders/?ref=built-with-nan">
+  <picture>
+    <source media="(prefers-color-scheme: light)" srcset="https://nan.builders/badge/built-with-nan-light.svg">
+    <img width="266" src="https://nan.builders/badge/built-with-nan-dark.svg" alt="Built with NaN">
+  </picture>
+</a>
+
 # Radar de Pliegos
+
+[![Demo de NaN Auto](demo/radar-de-pliegos.gif)]
 
 Read a Spanish public works tender in **under two minutes** and decide whether to bid.
 
@@ -489,3 +498,5 @@ publication date, raise list extraction precision, and add embeddings-based sear
 | `INFORME.md`      | Project report: what was built, in what order, and what went wrong    |
 
 ---
+
+[![Built with NaN](https://nan.builders/badge/built-with-nan-compact.svg)](https://nan.builders/?ref=built-with-nan)
