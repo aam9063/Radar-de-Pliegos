@@ -2,24 +2,37 @@
  * Typed API client for the Radar de Pliegos backend (RP-07).
  *
  * Every endpoint of the MVP API is wrapped here so views never call `fetch`
- * directly. The base URL comes from `VITE_API_URL` and defaults to the local
- * compose API.
+ * directly. The base URL is resolved at runtime, then at build time, and finally
+ * defaults to the local compose API.
  */
 
-/**
- * Resolve the API base URL from the build-time value.
- *
- * The bundle can carry an empty string when the image is built without
- * `VITE_API_URL` (Docker turns a missing build argument into ""), and a falsy
- * value must fall back to the local API rather than produce relative requests.
- * A trailing slash is stripped so paths are not doubled.
- */
-export function resolverApiBase(valor: string | undefined): string {
-  const limpio = valor?.trim()
-  return limpio === undefined || limpio === '' ? 'http://localhost:8000' : limpio.replace(/\/+$/, '')
+declare global {
+  interface Window {
+    __API_BASE__?: string
+  }
 }
 
-const API_BASE: string = resolverApiBase(import.meta.env.VITE_API_URL as string | undefined)
+/**
+ * Resolve the API base URL.
+ *
+ * Order matters: the runtime value (injected by the container before nginx
+ * starts) wins, then the value Vite inlined at build time, then the local API.
+ * Empty and whitespace values are treated as absent, because Docker turns a
+ * missing build argument into "", and trailing slashes are stripped so paths
+ * are not doubled.
+ */
+export function resolverApiBase(valor: string | undefined, inyectada?: string): string {
+  for (const candidata of [inyectada, valor]) {
+    const limpio = candidata?.trim()
+    if (limpio !== undefined && limpio !== '') return limpio.replace(/\/+$/, '')
+  }
+  return 'http://localhost:8000'
+}
+
+const API_BASE: string = resolverApiBase(
+  import.meta.env.VITE_API_URL as string | undefined,
+  typeof window === 'undefined' ? undefined : window.__API_BASE__,
+)
 
 export function apiUrl(path: string): string {
   return `${API_BASE}${path}`

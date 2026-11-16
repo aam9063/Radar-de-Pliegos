@@ -14,7 +14,7 @@ So the deployment is three pieces: one external Postgres and two apps.
 ```mermaid
 flowchart LR
     USER["Browser"] --> WEB["App: radar-web<br/>frontend/Dockerfile<br/>nginx :80"]
-    WEB -->|"VITE_API_URL<br/>baked at build time"| API["App: radar-api<br/>backend/Dockerfile<br/>uvicorn :8000 or :3080"]
+    WEB -->|"API_BASE_URL<br/>read at runtime"| API["App: radar-api<br/>backend/Dockerfile<br/>uvicorn :8000 or :3080"]
     API -->|"DATABASE_URL"| PG[("External Postgres<br/>Neon · Supabase · …")]
     API --> VOL[("Persistent volume<br/>mounted at the storage path")]
     API --> LLM["NaN Builders API"]
@@ -121,15 +121,15 @@ Create a second app from the same repository:
 | Expose over HTTP  | checked                                     |
 | Container port    | `80` (the nginx in the image listens on 80) |
 
-**Build variable** — this one is not a runtime variable:
+**Runtime variable** — no rebuild needed when it changes:
 
-| Variable       | Kind      | Value                                                                                            |
-| -------------- | --------- | ------------------------------------------------------------------------------------------------ |
-| `VITE_API_URL` | **build** | the public URL of the `radar-api` app, e.g. `https://radar-api.nan.builders` — no trailing slash |
+| Variable       | Kind        | Value                                                                                            |
+| -------------- | ----------- | ------------------------------------------------------------------------------------------------ |
+| `API_BASE_URL` | **runtime** | the public URL of the `radar-api` app, e.g. `https://radar-api.nan.builders` — no trailing slash |
 
-Vite inlines this value into the JavaScript bundle while building, so it must be
-present at **build** time. Changing it later requires a rebuilt image, not just a
-restart.
+The container rewrites `/config.js` before nginx starts, and the bundle reads
+that file at load time. `VITE_API_URL` is still honoured as a build-time
+fallback, but it needs a rebuild on every change, so prefer `API_BASE_URL`.
 
 No persistent storage and no other variables are needed for this app.
 
@@ -168,7 +168,7 @@ browser sends the origin without one, so an extra slash makes every request fail
 | Logs show `alembic` errors at boot                            | `DATABASE_URL` is wrong, the database is unreachable, or its SSL mode was edited by hand           |
 | `getaddrinfo failed` for a database host                      | The connection string points at an internal or compose host (`db`); use the provider's public host |
 | CORS error in the console                                     | `FRONTEND_ORIGINS` does not match the web origin exactly: scheme, no trailing slash                |
-| Site loads but every request fails                            | `VITE_API_URL` was empty or wrong when the image was built. Fix the build variable and rebuild     |
+| Site loads but every request fails                            | `API_BASE_URL` is missing or wrong. Set it and restart the app; no rebuild needed                   |
 | Uploads return 500                                            | The volume is not mounted, or `STORAGE_DIR` differs from the mount path                            |
 | PDFs disappear after a deploy                                 | The API app is not marked persistent                                                               |
 | Extraction returns 401/429                                    | `NAN_API_KEY` missing, invalid or out of quota                                                     |

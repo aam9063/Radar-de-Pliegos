@@ -25,4 +25,21 @@ describe('resolverApiBase (build-time API URL)', () => {
       'https://radar-api.example.test',
     )
   })
+
+  it('prefers the runtime value injected by the container', () => {
+    expect(resolverApiBase('https://build.example.test', 'https://runtime.example.test')).toBe(
+      'https://runtime.example.test',
+    )
+  })
+
+  it('falls back to the build-time value when the runtime one is empty', () => {
+    expect(resolverApiBase('https://build.example.test', '')).toBe('https://build.example.test')
+    expect(resolverApiBase('https://build.example.test', '   ')).toBe('https://build.example.test')
+  })
+
+  it('ignores trailing slashes on the runtime value too', () => {
+    expect(resolverApiBase(undefined, 'https://runtime.example.test/')).toBe(
+      'https://runtime.example.test',
+    )
+  })
 })
