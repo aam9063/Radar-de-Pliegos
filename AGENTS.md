@@ -124,6 +124,7 @@ Subagentes: solo con motivo explícito (exploración amplia, escritores en paral
 **Pull requests y merge (sobre `dev`)**
 - Puedes crear PRs hacia `dev` y, tras comprobar el CI en verde, **mergear a `dev`** (autorizado el 2026-11-12). Si el CI falla, corrígelo hasta dejarlo en verde.
 - **Nunca mergees de `dev` a `main`** (eso lo hace Albert). Tampoco hagas rebase ni cherry-pick sobre `main` ni `dev`.
+- **Sincronización de vuelta tras cada release.** Cuando una PR `dev → main` se mergea, abre una PR `main → dev` para devolverle a `dev` el commit de merge y cualquier cosa que haya nacido en `main` (como el README). Sin esa sincronización, el commit de merge vive solo en `main` y `dev` aparece N commits por detrás para siempre aunque el contenido sea idéntico. Los ficheros binarios que difieran (por ejemplo capturas nuevas) se resuelven conservando la versión más reciente.
 - Al cerrar una feature, deja en el feature document un borrador de PR en inglés: título, resumen, criterios de aceptación cubiertos, cómo probarlo y resultado de RDD.
 
 ## 7. CI (GitHub Actions)
