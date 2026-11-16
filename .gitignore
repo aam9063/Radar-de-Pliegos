@@ -1,5 +1,10 @@
 # Environment
+# Any env file is ignored, not only the exact `.env` name, so a tool that
+# writes a variant (`.env.local`, `.env.production`, …) cannot leak secrets
+# into the repository by accident. The example file stays versioned on purpose.
 .env
+.env.*
+!.env.example
 
 # Python
 __pycache__/
