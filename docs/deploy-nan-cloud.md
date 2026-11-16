@@ -80,8 +80,9 @@ Do not mix them: a mismatch is the most common `502` on this platform.
 
 - **Replicas: 1.** The PDFs live on a local volume; more replicas would each
   serve a different view of the disk.
-- **Persistent storage: on**, mounted at **`/app/storage`**. Without it, every
-  deploy or restart loses the uploaded PDFs.
+- **Persistent storage: on.** The platform mounts the volume at **`/data`**, so
+  `STORAGE_DIR` must be `/data`. Without the volume, every deploy or restart
+  loses the uploaded PDFs.
 
 **Environment variables** (runtime):
 
@@ -90,7 +91,7 @@ Do not mix them: a mismatch is the most common `502` on this platform.
 | `DATABASE_URL`     | yes                          | the connection string from step 0                                                                |
 | `NAN_API_KEY`      | yes                          | your NaN Builders key (`sk-…`)                                                                   |
 | `FRONTEND_ORIGINS` | yes                          | the public URL of the `radar-web` app, e.g. `https://radar-web.nan.builders` — no trailing slash |
-| `STORAGE_DIR`      | yes                          | `/app/storage` (must match the volume mount)                                                     |
+| `STORAGE_DIR`      | yes                          | `/data` (the platform's volume mount path)                                                       |
 | `PORT`             | only if the form says `3080` | `3080`                                                                                           |
 
 Optional, with defaults already correct:
